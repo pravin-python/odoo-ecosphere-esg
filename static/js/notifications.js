@@ -27,27 +27,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadList() {
-    list.innerHTML = `<li class="px-4 py-6 text-center text-sm text-slate-500">Loading…</li>`;
+    list.innerHTML = `<li class="px-4 py-6 text-center text-sm text-odoo-muted">Loading…</li>`;
     try {
       const res = await API.request("/notifications/?page_size=8");
       const data = await res.json();
       const rows = (data.results || data).slice(0, 8);
       if (!rows.length) {
-        list.innerHTML = `<li class="px-4 py-6 text-center text-sm text-slate-500">No notifications.</li>`;
+        list.innerHTML = `<li class="px-4 py-6 text-center text-sm text-odoo-muted">No notifications.</li>`;
         return;
       }
       list.innerHTML = rows.map((n) => `
-        <li class="px-4 py-3 ${n.is_read ? "" : "bg-slate-800/40"}">
+        <li class="px-4 py-3 ${n.is_read ? "" : "bg-odoo-purple/5"}">
           <div class="flex items-start gap-2">
             <span>${ICON[n.category] || "🔔"}</span>
             <div class="min-w-0">
-              <p class="truncate text-sm text-slate-200">${UI.escapeHtml(n.title)}</p>
-              <p class="text-xs text-slate-500">${UI.fmtDate(n.created_at)}</p>
+              <p class="truncate text-sm text-odoo-text">${UI.escapeHtml(n.title)}</p>
+              <p class="text-xs text-odoo-muted">${UI.fmtDate(n.created_at)}</p>
             </div>
           </div>
         </li>`).join("");
     } catch (e) {
-      list.innerHTML = `<li class="px-4 py-6 text-center text-sm text-red-400">Failed to load.</li>`;
+      list.innerHTML = `<li class="px-4 py-6 text-center text-sm text-red-600">Failed to load.</li>`;
     }
   }
 

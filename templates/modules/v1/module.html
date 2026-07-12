@@ -8,11 +8,11 @@
 <div id="module-data-root" data-module="{{ module_page }}" class="space-y-5">
     {# Sub-tab bar (from the sidebar nav for this module) #}
     {% for group in nav_groups %}{% if group.page == module_page %}
-    <div class="flex flex-wrap gap-1 border-b border-slate-800">
+    <div class="flex flex-wrap gap-1 border-b border-odoo-border">
         {% for label, tab in group.items %}
         <a href="?tab={{ tab }}"
            data-tab="{{ tab }}"
-           class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium {% if request.GET.tab == tab or not request.GET.tab and forloop.first %}border-brand-500 text-white{% else %}border-transparent text-slate-400 hover:text-slate-200{% endif %}">
+           class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium {% if request.GET.tab == tab or not request.GET.tab and forloop.first %}border-odoo-teal text-odoo-teal{% else %}border-transparent text-odoo-muted hover:text-odoo-text{% endif %}">
             {{ label }}
         </a>
         {% endfor %}
@@ -21,12 +21,12 @@
 
     {# Action toolbar #}
     <div class="flex flex-wrap items-center gap-2">
-        <button id="new-btn" type="button" class="rounded-lg {{ accent_btn }} px-4 py-2 text-sm font-semibold text-white transition">+ New</button>
-        <button id="export-btn" type="button" class="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700 transition">⬇ Export PDF</button>
+        <button id="new-btn" type="button" class="rounded-lg bg-odoo-teal px-4 py-2 text-sm font-semibold text-white hover:bg-odoo-teal-dark transition">+ New</button>
+        <button id="export-btn" type="button" class="rounded-lg border border-odoo-border bg-white px-4 py-2 text-sm font-medium text-odoo-text hover:bg-gray-50 transition">⬇ Export PDF</button>
     </div>
 
     {# Data area — filled by module-view.js based on the active tab. #}
-    <div class="rounded-2xl border border-slate-800 bg-slate-900">
+    <div class="rounded-xl border border-odoo-border bg-white shadow-sm">
         <div id="module-data">{% include "include/_spinner.html" %}</div>
     </div>
 </div>

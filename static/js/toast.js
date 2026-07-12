@@ -3,9 +3,9 @@
   "use strict";
 
   const STYLES = {
-    success: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
-    error: "border-red-500/40 bg-red-500/10 text-red-300",
-    info: "border-slate-600 bg-slate-800 text-slate-200",
+    success: "border-green-200 bg-green-50 text-green-800",
+    error: "border-red-200 bg-red-50 text-red-800",
+    info: "border-odoo-border bg-white text-odoo-text",
   };
 
   function container() {

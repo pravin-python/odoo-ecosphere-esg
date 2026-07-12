@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (el) el.textContent = value;
   }
 
-  const gridColor = "rgba(148,163,184,0.12)";
-  const tickColor = "#94a3b8";
+  const gridColor = "rgba(0,0,0,0.06)";
+  const tickColor = "#6b7280";
 
   let data;
   try {
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     data = await res.json();
   } catch (err) {
     document.getElementById("recent-activity").innerHTML =
-      '<li class="text-red-400">Could not load dashboard data.</li>';
+      '<li class="text-red-600">Could not load dashboard data.</li>';
     return;
   }
 
@@ -42,8 +42,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       labels: data.emissions_trend.map((p) => p.label),
       datasets: [{
         data: data.emissions_trend.map((p) => p.value),
-        borderColor: "#10b981",
-        backgroundColor: "rgba(16,185,129,0.15)",
+        borderColor: "#017E84",
+        backgroundColor: "rgba(1,126,132,0.10)",
         fill: true,
         tension: 0.35,
         pointRadius: 2,
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       labels: ranking.map((d) => d.name),
       datasets: [{
         data: ranking.map((d) => d.co2e),
-        backgroundColor: "#0ea5e9",
+        backgroundColor: "#714B67",
         borderRadius: 6,
       }],
     },
@@ -70,10 +70,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Recent activity
   const list = document.getElementById("recent-activity");
   if (!data.recent_activity.length) {
-    list.innerHTML = '<li class="text-slate-500">No recent activity yet.</li>';
+    list.innerHTML = '<li class="text-odoo-muted">No recent activity yet.</li>';
   } else {
     list.innerHTML = data.recent_activity
-      .map((a) => `<li class="flex items-start gap-2 border-b border-slate-800 pb-2 last:border-0">
+      .map((a) => `<li class="flex items-start gap-2 border-b border-odoo-border pb-2 last:border-0">
           <span class="mt-0.5">${badge(a.category)}</span>
           <span>${escapeHtml(a.title)}</span>
         </li>`)

@@ -9,10 +9,6 @@
     governance: "GOVERNANCE", gamification: "ESG_SUMMARY",
     reports: "ESG_SUMMARY", settings: "ESG_SUMMARY",
   };
-  const TAB_REPORT = {
-    environmental: "ENVIRONMENTAL", social: "SOCIAL",
-    governance: "GOVERNANCE", esg: "ESG_SUMMARY", custom: "ESG_SUMMARY",
-  };
 
   // ── helpers ──
   async function listFetch(endpoint) {
@@ -35,22 +31,22 @@
     return Array.isArray(v) ? v[0] : v;
   }
   function pill(text, cls) {
-    return `<span class="rounded-full px-2 py-0.5 text-xs ${cls}">${UI.escapeHtml(text)}</span>`;
+    return `<span class="rounded-full px-2 py-0.5 text-xs font-medium ${cls}">${UI.escapeHtml(text)}</span>`;
   }
   function statusPill(status, label) {
     const map = {
-      APPROVED: "bg-emerald-500/15 text-emerald-400", ACHIEVED: "bg-emerald-500/15 text-emerald-400",
-      RESOLVED: "bg-emerald-500/15 text-emerald-400", ACTIVE: "bg-sky-500/15 text-sky-400",
-      PENDING: "bg-amber-500/15 text-amber-400", OPEN: "bg-amber-500/15 text-amber-400",
-      IN_PROGRESS: "bg-sky-500/15 text-sky-400", REJECTED: "bg-red-500/15 text-red-400",
-      MISSED: "bg-red-500/15 text-red-400",
+      APPROVED: "bg-green-100 text-green-700", ACHIEVED: "bg-green-100 text-green-700",
+      RESOLVED: "bg-green-100 text-green-700", ACTIVE: "bg-blue-100 text-blue-700",
+      PENDING: "bg-amber-100 text-amber-700", OPEN: "bg-amber-100 text-amber-700",
+      IN_PROGRESS: "bg-blue-100 text-blue-700", REJECTED: "bg-red-100 text-red-700",
+      MISSED: "bg-red-100 text-red-700",
     };
-    return pill(label || status, map[status] || "bg-slate-700 text-slate-300");
+    return pill(label || status, map[status] || "bg-gray-100 text-gray-600");
   }
   function severityPill(sev, label) {
-    const map = { LOW: "bg-slate-700 text-slate-300", MEDIUM: "bg-sky-500/15 text-sky-400",
-      HIGH: "bg-amber-500/15 text-amber-400", CRITICAL: "bg-red-500/15 text-red-400" };
-    return pill(label || sev, map[sev] || "bg-slate-700 text-slate-300");
+    const map = { LOW: "bg-gray-100 text-gray-600", MEDIUM: "bg-blue-100 text-blue-700",
+      HIGH: "bg-amber-100 text-amber-700", CRITICAL: "bg-red-100 text-red-700" };
+    return pill(label || sev, map[sev] || "bg-gray-100 text-gray-600");
   }
 
   /** Generic table view with optional per-row actions + action handlers. */
@@ -101,7 +97,7 @@
       { label: "Department", key: "department_name" },
       { label: "Source", render: (r) => UI.escapeHtml(r.source_type_label) },
       { label: "Quantity", render: (r) => UI.fmtNum(r.quantity) },
-      { label: "CO₂e (kg)", render: (r) => `<span class="font-medium text-emerald-400">${UI.fmtNum(r.co2e_kg)}</span>` },
+      { label: "CO₂e (kg)", render: (r) => `<span class="font-medium text-green-600">${UI.fmtNum(r.co2e_kg)}</span>` },
     ],
     goals: [
       { label: "Title", key: "title" }, { label: "Department", key: "department_name" },
@@ -129,7 +125,7 @@
       { label: "Severity", render: (r) => severityPill(r.severity, r.severity_label) },
       { label: "Due", render: (r) => UI.fmtDate(r.due_date) },
       { label: "Status", render: (r) => r.is_overdue
-          ? pill("OVERDUE", "bg-red-500/20 text-red-400 font-semibold")
+          ? pill("OVERDUE", "bg-red-100 text-red-700 font-semibold")
           : statusPill(r.status, r.status_label) },
     ],
     challenges: [
@@ -166,31 +162,31 @@
       try { acts = await listFetch("/social/activities/"); }
       catch (e) { mount.innerHTML = UI.errorBox("Could not load activities."); return; }
       if (!acts.length) { mount.innerHTML = UI.empty("No active CSR activities."); return; }
-      mount.innerHTML = `<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${acts.map(csrCard).join("")}</div>`;
+      mount.innerHTML = `<div class="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">${acts.map(csrCard).join("")}</div>`;
       mount.querySelectorAll("[data-join]").forEach((b) =>
         b.addEventListener("click", () => openJoin(b.dataset.join, b.dataset.title)));
     }
     load();
   }
   function csrCard(a) {
-    return `<div class="rounded-2xl border border-sky-500/40 bg-slate-900 p-5">
-      <h3 class="font-semibold text-white">${UI.escapeHtml(a.title)}</h3>
-      <p class="mt-1 text-xs text-sky-400">${UI.escapeHtml(a.category_label)} · ${a.xp_reward} XP</p>
-      <p class="mt-2 text-sm text-slate-400">${a.participant_count} joined · Evidence required</p>
+    return `<div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm">
+      <h3 class="font-semibold text-odoo-text">${UI.escapeHtml(a.title)}</h3>
+      <p class="mt-1 text-xs font-medium text-odoo-teal">${UI.escapeHtml(a.category_label)} · ${a.xp_reward} XP</p>
+      <p class="mt-2 text-sm text-odoo-muted">${a.participant_count} joined · Evidence required</p>
       <button data-join="${a.id}" data-title="${UI.escapeHtml(a.title)}"
-        class="mt-4 rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700">Join</button>
+        class="mt-4 rounded-lg bg-odoo-teal px-3 py-1.5 text-sm font-medium text-white hover:bg-odoo-teal-dark">Join</button>
     </div>`;
   }
   function openJoin(activityId, title) {
     const m = UI.modal(`Join: ${title}`, `
       <form data-form class="space-y-4">
         <div>
-          <label class="block text-sm text-slate-300">Evidence (image or PDF)</label>
+          <label class="block text-sm text-odoo-muted">Evidence (image or PDF)</label>
           <input type="file" name="proof_file" accept="image/*,application/pdf"
-            class="mt-1 block w-full text-sm text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-800 file:px-3 file:py-2 file:text-slate-200">
+            class="mt-1 block w-full text-sm text-odoo-text file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-odoo-text">
         </div>
-        <div data-err class="hidden text-sm text-red-400"></div>
-        <button type="submit" class="w-full rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Submit participation</button>
+        <div data-err class="hidden text-sm text-red-600"></div>
+        <button type="submit" class="w-full rounded-lg bg-odoo-teal px-4 py-2 text-sm font-semibold text-white hover:bg-odoo-teal-dark">Submit participation</button>
       </form>`);
     const form = m.body.querySelector("[data-form]");
     form.addEventListener("submit", async (e) => {
@@ -218,11 +214,11 @@
         { label: "Activity", key: "activity_title" },
         { label: "Status", render: (r) => statusPill(r.status, r.status_label) },
         { label: "Evidence", render: (r) => r.proof_url
-            ? `<a href="${r.proof_url}" target="_blank" class="text-sky-400 underline">View</a>` : "—" },
+            ? `<a href="${r.proof_url}" target="_blank" class="text-odoo-teal underline">View</a>` : "—" },
       ],
       (r) => r.status === "PENDING"
-        ? `<button data-act="approve" data-id="${r.id}" class="rounded bg-emerald-600/80 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-600">Approve</button>
-           <button data-act="reject" data-id="${r.id}" class="ml-1 rounded bg-red-600/80 px-2 py-1 text-xs font-medium text-white hover:bg-red-600">Reject</button>`
+        ? `<button data-act="approve" data-id="${r.id}" class="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700">Approve</button>
+           <button data-act="reject" data-id="${r.id}" class="ml-1 rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700">Reject</button>`
         : "—",
       {
         approve: (id) => post(`/social/participation/${id}/approve/`).then(() => Toast.success("Approved — XP awarded.")),
@@ -238,11 +234,11 @@
         { label: "Policy", key: "policy_title" },
         { label: "Employee", key: "employee_name" },
         { label: "Acknowledged", render: (r) => r.is_acknowledged
-            ? `<span class="text-emerald-400">${UI.fmtDate(r.acknowledged_at)}</span>` : "Pending" },
+            ? `<span class="text-green-600">${UI.fmtDate(r.acknowledged_at)}</span>` : "Pending" },
       ],
       (r) => r.is_acknowledged
-        ? '<span class="text-xs text-emerald-400">✓ Acknowledged</span>'
-        : `<button data-act="ack" data-id="${r.id}" class="rounded bg-violet-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-violet-700">Acknowledge</button>`,
+        ? '<span class="text-xs text-green-600">✓ Acknowledged</span>'
+        : `<button data-act="ack" data-id="${r.id}" class="rounded bg-odoo-purple px-2.5 py-1 text-xs font-medium text-white hover:bg-odoo-purple-dark">Acknowledge</button>`,
       { ack: (id) => post(`/governance/acknowledgements/${id}/acknowledge/`).then(() => Toast.success("Policy acknowledged.")) }
     )(mount);
   }
@@ -254,7 +250,7 @@
       try { rewards = await listFetch("/gamification/rewards/"); }
       catch (e) { mount.innerHTML = UI.errorBox("Could not load rewards."); return; }
       if (!rewards.length) { mount.innerHTML = UI.empty("No rewards available."); return; }
-      mount.innerHTML = `<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">${rewards.map(rewardCard).join("")}</div>`;
+      mount.innerHTML = `<div class="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3">${rewards.map(rewardCard).join("")}</div>`;
       mount.querySelectorAll("[data-act='redeem']").forEach((b) =>
         b.addEventListener("click", async () => {
           b.disabled = true;
@@ -270,13 +266,13 @@
   }
   function rewardCard(r) {
     const out = r.stock_count < 1;
-    return `<div class="rounded-2xl border border-amber-500/40 bg-slate-900 p-5">
-      <h3 class="font-semibold text-white">${UI.escapeHtml(r.name)}</h3>
-      <p class="mt-1 text-sm text-slate-400">${UI.escapeHtml(r.description || "")}</p>
-      <p class="mt-3 text-lg font-bold text-amber-400">${r.points_required} XP</p>
-      <p class="text-xs text-slate-500">${r.stock_count} in stock</p>
+    return `<div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm">
+      <h3 class="font-semibold text-odoo-text">${UI.escapeHtml(r.name)}</h3>
+      <p class="mt-1 text-sm text-odoo-muted">${UI.escapeHtml(r.description || "")}</p>
+      <p class="mt-3 text-lg font-bold text-odoo-purple">${r.points_required} XP</p>
+      <p class="text-xs text-odoo-muted">${r.stock_count} in stock</p>
       <button data-act="redeem" data-id="${r.id}" ${out ? "disabled" : ""}
-        class="mt-3 w-full rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        class="mt-3 w-full rounded-lg bg-odoo-teal px-3 py-1.5 text-sm font-medium text-white hover:bg-odoo-teal-dark disabled:opacity-50 disabled:cursor-not-allowed">
         ${out ? "Out of stock" : "Redeem"}</button>
     </div>`;
   }
@@ -288,12 +284,12 @@
       try { badges = await listFetch("/gamification/badges/"); }
       catch (e) { mount.innerHTML = UI.errorBox("Could not load badges."); return; }
       if (!badges.length) { mount.innerHTML = UI.empty("No badges defined yet."); return; }
-      const tierColor = { BRONZE: "text-amber-600", SILVER: "text-slate-300", GOLD: "text-amber-400" };
-      mount.innerHTML = `<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">${badges.map((b) =>
-        `<div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 text-center">
+      const tierColor = { BRONZE: "text-amber-700", SILVER: "text-gray-500", GOLD: "text-amber-500" };
+      mount.innerHTML = `<div class="grid gap-4 grid-cols-2 p-4 sm:grid-cols-3 lg:grid-cols-4">${badges.map((b) =>
+        `<div class="rounded-xl border border-odoo-border bg-white p-5 text-center shadow-sm">
           <div class="text-3xl">${UI.escapeHtml(b.icon || "🏅")}</div>
-          <p class="mt-2 font-semibold text-white">${UI.escapeHtml(b.name)}</p>
-          <p class="text-xs ${tierColor[b.tier] || "text-slate-400"}">${UI.escapeHtml(b.tier_label)}</p>
+          <p class="mt-2 font-semibold text-odoo-text">${UI.escapeHtml(b.name)}</p>
+          <p class="text-xs ${tierColor[b.tier] || "text-odoo-muted"}">${UI.escapeHtml(b.tier_label)}</p>
         </div>`).join("")}</div>`;
     }
     load();
@@ -307,10 +303,10 @@
       catch (e) { mount.innerHTML = UI.errorBox("Could not load leaderboard."); return; }
       if (!rows.length) { mount.innerHTML = UI.empty("No ranked employees yet."); return; }
       mount.innerHTML = UI.table([
-        { label: "Rank", render: (r) => `<span class="font-bold text-amber-400">#${r.rank}</span>` },
+        { label: "Rank", render: (r) => `<span class="font-bold text-odoo-purple">#${r.rank}</span>` },
         { label: "Name", key: "name" },
         { label: "Department", key: "department" },
-        { label: "Total XP", render: (r) => `<span class="font-medium text-white">${UI.fmtNum(r.total_xp)}</span>` },
+        { label: "Total XP", render: (r) => `<span class="font-medium text-odoo-text">${UI.fmtNum(r.total_xp)}</span>` },
         { label: "Level", key: "level" },
         { label: "Badges", key: "badges" },
       ], rows);
@@ -323,10 +319,10 @@
       const label = { ENVIRONMENTAL: "Environmental", SOCIAL: "Social",
         GOVERNANCE: "Governance", ESG_SUMMARY: "ESG Summary" }[reportType];
       mount.innerHTML = `<div class="px-6 py-10">
-        <p class="text-sm text-slate-300">Download the <span class="font-semibold text-white">${label}</span> report (data is scoped to your permissions):</p>
+        <p class="text-sm text-odoo-muted">Download the <span class="font-semibold text-odoo-text">${label}</span> report (data is scoped to your permissions):</p>
         <div class="mt-4 flex flex-wrap gap-2">
           ${["pdf", "xlsx", "csv"].map((f) =>
-            `<button data-fmt="${f}" class="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700">⬇ ${f.toUpperCase()}</button>`).join("")}
+            `<button data-fmt="${f}" class="rounded-lg border border-odoo-border bg-white px-4 py-2 text-sm font-medium text-odoo-text hover:bg-gray-50">⬇ ${f.toUpperCase()}</button>`).join("")}
         </div></div>`;
       mount.querySelectorAll("[data-fmt]").forEach((b) =>
         b.addEventListener("click", () => downloadReport(reportType, b.dataset.fmt)));

@@ -1,28 +1,28 @@
 {% with url_name=request.resolver_match.url_name %}
 <aside id="sidebar"
-       class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-y-auto border-r border-slate-800 bg-slate-900 transition-transform lg:static lg:translate-x-0">
-    <div class="flex h-16 items-center gap-2 px-5 border-b border-slate-800">
-        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-lg font-bold text-white">E</span>
-        <span class="text-lg font-semibold text-white">EcoSphere<span class="text-brand-500"> ESG</span></span>
+       class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full overflow-y-auto border-r border-odoo-border bg-white transition-transform lg:static lg:translate-x-0">
+    <div class="flex h-16 items-center gap-2 border-b border-odoo-border px-5">
+        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-odoo-purple text-lg font-bold text-white">E</span>
+        <span class="text-lg font-semibold text-odoo-text">EcoSphere<span class="text-odoo-purple"> ESG</span></span>
     </div>
 
     <nav class="px-3 py-4 text-sm">
         <a href="{% url 'core_v1:dashboard' %}"
-           class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium {% if url_name == 'dashboard' %}bg-brand-600/15 text-brand-400{% else %}text-slate-300 hover:bg-slate-800{% endif %}">
+           class="flex items-center gap-2 rounded-lg px-3 py-2 font-medium {% if url_name == 'dashboard' %}bg-odoo-purple/10 text-odoo-purple{% else %}text-odoo-muted hover:bg-gray-100{% endif %}">
             📊 Dashboard
         </a>
 
         {% for group in nav_groups %}
         <div class="mt-4">
             <a href="{% url 'core_v1:'|add:group.page %}"
-               class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold {{ group.color }} {% if url_name == group.page %}bg-slate-800/60{% else %}hover:bg-slate-800{% endif %}">
+               class="flex items-center gap-2 rounded-lg px-3 py-2 font-semibold {% if url_name == group.page %}bg-odoo-purple/10 text-odoo-purple{% else %}text-odoo-text hover:bg-gray-100{% endif %}">
                 <span>{{ group.icon }}</span> {{ group.label }}
             </a>
             <div class="mt-1 space-y-0.5 pl-4">
                 {% for label, tab in group.items %}
                 <a href="{% url 'core_v1:'|add:group.page %}?tab={{ tab }}"
                    data-tab-link="{{ tab }}"
-                   class="block rounded-md px-3 py-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                   class="block rounded-md px-3 py-1.5 text-odoo-muted hover:bg-gray-100 hover:text-odoo-text">
                     {{ label }}
                 </a>
                 {% endfor %}
@@ -31,5 +31,5 @@
         {% endfor %}
     </nav>
 </aside>
-<div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/50 lg:hidden"></div>
+<div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden"></div>
 {% endwith %}

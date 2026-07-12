@@ -8,21 +8,21 @@
 <div class="space-y-6">
     <!-- ESG score tiles -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-2xl border-2 border-emerald-500/60 bg-emerald-500/5 p-5">
-            <p class="text-sm font-medium text-slate-400">Environmental Score</p>
-            <p class="mt-2 text-3xl font-bold text-emerald-400"><span id="score-environmental">—</span> <span class="text-lg text-slate-500">/ 100</span></p>
+        <div class="rounded-xl border-t-4 border-green-500 border-x border-b border-odoo-border bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-odoo-muted">Environmental Score</p>
+            <p class="mt-2 text-3xl font-bold text-green-600"><span id="score-environmental">—</span> <span class="text-lg text-odoo-muted">/ 100</span></p>
         </div>
-        <div class="rounded-2xl border-2 border-sky-500/60 bg-sky-500/5 p-5">
-            <p class="text-sm font-medium text-slate-400">Social Score</p>
-            <p class="mt-2 text-3xl font-bold text-sky-400"><span id="score-social">—</span> <span class="text-lg text-slate-500">/ 100</span></p>
+        <div class="rounded-xl border-t-4 border-odoo-teal border-x border-b border-odoo-border bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-odoo-muted">Social Score</p>
+            <p class="mt-2 text-3xl font-bold text-odoo-teal"><span id="score-social">—</span> <span class="text-lg text-odoo-muted">/ 100</span></p>
         </div>
-        <div class="rounded-2xl border-2 border-violet-500/60 bg-violet-500/5 p-5">
-            <p class="text-sm font-medium text-slate-400">Governance Score</p>
-            <p class="mt-2 text-3xl font-bold text-violet-400"><span id="score-governance">—</span> <span class="text-lg text-slate-500">/ 100</span></p>
+        <div class="rounded-xl border-t-4 border-odoo-purple border-x border-b border-odoo-border bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-odoo-muted">Governance Score</p>
+            <p class="mt-2 text-3xl font-bold text-odoo-purple"><span id="score-governance">—</span> <span class="text-lg text-odoo-muted">/ 100</span></p>
         </div>
-        <div class="rounded-2xl border-2 border-brand-500/60 bg-brand-500/5 p-5">
-            <p class="text-sm font-medium text-slate-400">Overall ESG Score</p>
-            <p class="mt-2 text-3xl font-bold text-brand-400"><span id="score-overall">—</span> <span class="text-lg text-slate-500">/ 100</span></p>
+        <div class="rounded-xl border-t-4 border-amber-500 border-x border-b border-odoo-border bg-white p-5 shadow-sm">
+            <p class="text-sm font-medium text-odoo-muted">Overall ESG Score</p>
+            <p class="mt-2 text-3xl font-bold text-amber-600"><span id="score-overall">—</span> <span class="text-lg text-odoo-muted">/ 100</span></p>
         </div>
     </div>
 
@@ -36,31 +36,31 @@
 
     <!-- Charts -->
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
-            <h2 class="mb-4 text-sm font-semibold text-slate-200">📈 Emissions Trend (12 mo)</h2>
+        <div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm lg:col-span-2">
+            <h2 class="mb-4 text-sm font-semibold text-odoo-text">📈 Emissions Trend (12 mo)</h2>
             <div class="h-64"><canvas id="chart-emissions"></canvas></div>
         </div>
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <h2 class="mb-4 text-sm font-semibold text-slate-200">📊 Department Ranking</h2>
+        <div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm">
+            <h2 class="mb-4 text-sm font-semibold text-odoo-text">📊 Department Ranking</h2>
             <div class="h-64"><canvas id="chart-ranking"></canvas></div>
         </div>
     </div>
 
     <!-- Recent activity + quick actions -->
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5 lg:col-span-2">
-            <h2 class="mb-4 text-sm font-semibold text-slate-200">🕐 Recent Activity</h2>
-            <ul id="recent-activity" class="space-y-2 text-sm text-slate-300">
-                <li class="text-slate-500">Loading…</li>
+        <div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm lg:col-span-2">
+            <h2 class="mb-4 text-sm font-semibold text-odoo-text">🕐 Recent Activity</h2>
+            <ul id="recent-activity" class="space-y-2 text-sm text-odoo-muted">
+                <li class="text-odoo-muted">Loading…</li>
             </ul>
         </div>
-        <div class="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-            <h2 class="mb-4 text-sm font-semibold text-slate-200">⚡ Quick Actions</h2>
+        <div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm">
+            <h2 class="mb-4 text-sm font-semibold text-odoo-text">⚡ Quick Actions</h2>
             <div class="space-y-2">
-                <a href="{% url 'core_v1:environmental' %}?tab=goals" class="block rounded-lg bg-emerald-600/15 px-3 py-2 text-sm font-medium text-emerald-400 hover:bg-emerald-600/25">+ New Environmental Goal</a>
-                <a href="{% url 'core_v1:social' %}?tab=csr" class="block rounded-lg bg-sky-600/15 px-3 py-2 text-sm font-medium text-sky-400 hover:bg-sky-600/25">+ New CSR Activity</a>
-                <a href="{% url 'core_v1:governance' %}?tab=audits" class="block rounded-lg bg-violet-600/15 px-3 py-2 text-sm font-medium text-violet-400 hover:bg-violet-600/25">+ New Audit</a>
-                <a href="{% url 'core_v1:reports' %}?tab=esg" class="block rounded-lg bg-slate-800 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700">View ESG Summary Report</a>
+                <a href="{% url 'core_v1:environmental' %}?tab=goals" class="block rounded-lg bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100">+ New Environmental Goal</a>
+                <a href="{% url 'core_v1:social' %}?tab=csr" class="block rounded-lg bg-teal-50 px-3 py-2 text-sm font-medium text-odoo-teal hover:bg-teal-100">+ New CSR Activity</a>
+                <a href="{% url 'core_v1:governance' %}?tab=audits" class="block rounded-lg bg-odoo-purple/10 px-3 py-2 text-sm font-medium text-odoo-purple hover:bg-odoo-purple/20">+ New Audit</a>
+                <a href="{% url 'core_v1:reports' %}?tab=esg" class="block rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-odoo-text hover:bg-gray-200">View ESG Summary Report</a>
             </div>
         </div>
     </div>

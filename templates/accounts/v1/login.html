@@ -7,13 +7,13 @@
 <div class="w-full max-w-md">
     <!-- Brand -->
     <div class="mb-8 flex flex-col items-center">
-        <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-2xl font-bold text-white shadow-lg shadow-brand-600/30">E</span>
-        <h1 class="mt-4 text-2xl font-bold text-slate-900">EcoSphere<span class="text-brand-600"> ESG</span></h1>
-        <p class="mt-1 text-sm text-slate-500">Sign in to your sustainability workspace</p>
+        <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-odoo-purple text-2xl font-bold text-white shadow-lg">E</span>
+        <h1 class="mt-4 text-2xl font-bold text-odoo-text">EcoSphere<span class="text-odoo-purple"> ESG</span></h1>
+        <p class="mt-1 text-sm text-odoo-muted">Sign in to your sustainability workspace</p>
     </div>
 
     <!-- Card -->
-    <div class="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50">
+    <div class="rounded-2xl border border-odoo-border bg-white p-8 shadow-sm">
         <!-- Error alert -->
         <div id="login-error"
              class="hidden mb-5 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
@@ -22,22 +22,22 @@
 
         <form id="login-form" class="space-y-5" novalidate>
             <div>
-                <label for="username" class="block text-sm font-medium text-slate-700">Username</label>
+                <label for="username" class="block text-sm font-medium text-odoo-text">Username</label>
                 <input id="username" name="username" type="text" autocomplete="username" required
-                       class="mt-1.5 block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                       class="mt-1.5 block w-full rounded-lg border border-odoo-border px-3.5 py-2.5 text-odoo-text placeholder-gray-400 shadow-sm focus:border-odoo-teal focus:outline-none focus:ring-2 focus:ring-odoo-teal/30 transition"
                        placeholder="you@company.com">
             </div>
 
             <div>
                 <div class="flex items-center justify-between">
-                    <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
+                    <label for="password" class="block text-sm font-medium text-odoo-text">Password</label>
                 </div>
                 <div class="relative mt-1.5">
                     <input id="password" name="password" type="password" autocomplete="current-password" required
-                           class="block w-full rounded-lg border border-slate-300 px-3.5 py-2.5 pr-11 text-slate-900 placeholder-slate-400 shadow-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition"
+                           class="block w-full rounded-lg border border-odoo-border px-3.5 py-2.5 pr-11 text-odoo-text placeholder-gray-400 shadow-sm focus:border-odoo-teal focus:outline-none focus:ring-2 focus:ring-odoo-teal/30 transition"
                            placeholder="••••••••">
                     <button id="toggle-password" type="button" tabindex="-1"
-                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600">
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-odoo-muted">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -47,7 +47,7 @@
             </div>
 
             <button id="login-submit" type="submit"
-                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:cursor-not-allowed disabled:opacity-70 transition">
+                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-odoo-teal px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-odoo-teal-dark focus:outline-none focus:ring-2 focus:ring-odoo-teal/50 disabled:cursor-not-allowed disabled:opacity-70 transition">
                 <svg id="login-spinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -57,9 +57,9 @@
         </form>
     </div>
 
-    <p class="mt-6 text-center text-sm text-slate-500">
+    <p class="mt-6 text-center text-sm text-odoo-muted">
         Don't have an account?
-        <a href="{% url 'core_v1:register' %}" class="font-medium text-brand-600 hover:text-brand-700">Create one</a>
+        <a href="{% url 'core_v1:register' %}" class="font-medium text-odoo-teal hover:text-odoo-teal-dark">Create one</a>
     </p>
 </div>
 {% endblock %}

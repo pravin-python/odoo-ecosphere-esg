@@ -10,18 +10,18 @@
 
   function spinner() {
     return `<div class="flex justify-center py-16">
-      <svg class="h-7 w-7 animate-spin text-brand-500" viewBox="0 0 24 24" fill="none">
+      <svg class="h-7 w-7 animate-spin text-odoo-teal" viewBox="0 0 24 24" fill="none">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"></path>
       </svg></div>`;
   }
 
   function empty(text) {
-    return `<div class="px-6 py-16 text-center text-sm text-slate-500">${escapeHtml(text)}</div>`;
+    return `<div class="px-6 py-16 text-center text-sm text-odoo-muted">${escapeHtml(text)}</div>`;
   }
 
   function errorBox(text) {
-    return `<div class="px-6 py-16 text-center text-sm text-red-400">${escapeHtml(text)}</div>`;
+    return `<div class="px-6 py-16 text-center text-sm text-red-600">${escapeHtml(text)}</div>`;
   }
 
   function fmtDate(iso) {
@@ -37,8 +37,8 @@
 
   function boolPill(v) {
     return v
-      ? '<span class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-400">Yes</span>'
-      : '<span class="rounded-full bg-slate-700 px-2 py-0.5 text-xs text-slate-400">No</span>';
+      ? '<span class="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">Yes</span>'
+      : '<span class="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">No</span>';
   }
 
   /** columns: [{label, key, render?(row)}]. actions?: (row)=>html string. */
@@ -48,25 +48,25 @@
     const body = rows.map((row) => {
       const cells = columns.map((c) => {
         const val = c.render ? c.render(row) : escapeHtml(row[c.key]);
-        return `<td class="px-4 py-3 text-slate-300">${val == null ? "—" : val}</td>`;
+        return `<td class="px-4 py-3 text-odoo-text">${val == null ? "—" : val}</td>`;
       }).join("");
       const act = actions ? `<td class="px-4 py-3 text-right">${actions(row)}</td>` : "";
-      return `<tr class="border-t border-slate-800 hover:bg-slate-800/40">${cells}${act}</tr>`;
+      return `<tr class="border-t border-odoo-border hover:bg-gray-50">${cells}${act}</tr>`;
     }).join("");
     return `<div class="overflow-x-auto"><table class="min-w-full text-sm">
-      <thead class="bg-slate-800/60 text-slate-400"><tr>${head}${actionHead}</tr></thead>
+      <thead class="bg-gray-50 text-odoo-muted"><tr>${head}${actionHead}</tr></thead>
       <tbody>${body}</tbody></table></div>`;
   }
 
   /** Simple centered modal. Returns { root, close }. */
   function modal(title, contentHtml) {
     const root = document.createElement("div");
-    root.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4";
+    root.className = "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4";
     root.innerHTML = `
-      <div class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl">
+      <div class="w-full max-w-md rounded-xl border border-odoo-border bg-white p-6 shadow-xl">
         <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-white">${escapeHtml(title)}</h3>
-          <button data-close class="rounded-lg p-1 text-slate-400 hover:bg-slate-800">✕</button>
+          <h3 class="text-base font-semibold text-odoo-text">${escapeHtml(title)}</h3>
+          <button data-close class="rounded-lg p-1 text-odoo-muted hover:bg-gray-100">✕</button>
         </div>
         <div data-body>${contentHtml}</div>
       </div>`;
