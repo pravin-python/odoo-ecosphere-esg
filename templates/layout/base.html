@@ -1,0 +1,22 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ecosphere ESG{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% include "include/navbar.html" %}
+
+    <main class="content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include "include/footer.html" %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
