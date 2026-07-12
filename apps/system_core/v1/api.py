@@ -1,7 +1,29 @@
-"""Master-data read APIs: products and categories (Settings + Environmental)."""
+"""Master-data read APIs: products, categories, and global config (Settings)."""
 from rest_framework import serializers, viewsets
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .models import Category, ProductESGProfile
+from .models import Category, GlobalConfiguration, ProductESGProfile
+
+
+class GlobalConfigView(APIView):
+    """Read the platform configuration singleton (Settings → ESG Configuration)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        c = GlobalConfiguration.load()
+        return Response({
+            "current_reporting_year": c.current_reporting_year,
+            "auto_emission_enabled": c.auto_emission_enabled,
+            "strict_evidence_required": c.strict_evidence_required,
+            "badge_auto_award_enabled": getattr(c, "badge_auto_award_enabled", True),
+            "default_carbon_reduction_target": float(c.default_carbon_reduction_target),
+            "weight_environmental": getattr(c, "weight_environmental", 40),
+            "weight_social": getattr(c, "weight_social", 30),
+            "weight_governance": getattr(c, "weight_governance", 30),
+        })
 
 
 class ProductESGProfileSerializer(serializers.ModelSerializer):

@@ -1,13 +1,59 @@
 """Social APIs: CSR activity catalog + employee participation with evidence upload."""
+from collections import Counter
+
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.core.v1.enums import ApprovalStatus
 
 from .models import CSRActivity, EmployeeParticipation
+
+
+class DiversityView(APIView):
+    """Workforce diversity summary (Social → Diversity Dashboard).
+
+    Scoped to the caller's department unless they hold a privileged role.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        User = get_user_model()
+        user = request.user
+        privileged = user.is_superuser or getattr(user, "role", None) in ("ADMIN", "GOVERNANCE_OFFICER")
+
+        users = User.objects.filter(is_active=True)
+        if not privileged and user.department_id:
+            users = users.filter(department_id=user.department_id)
+
+        role_labels = dict(User._meta.get_field("role").choices)
+        by_role = [
+            {"label": role_labels.get(r, r or "—"), "count": n}
+            for r, n in Counter(users.values_list("role", flat=True)).items()
+        ]
+        by_department = [
+            {"label": name or "Unassigned", "count": n}
+            for name, n in Counter(users.values_list("department__name", flat=True)).items()
+        ]
+        headcount = users.count()
+        participants = (
+            EmployeeParticipation.objects.filter(status=ApprovalStatus.APPROVED)
+            .values("employee").distinct().count()
+        )
+        rate = round(participants / headcount * 100, 1) if headcount else 0.0
+
+        return Response({
+            "headcount": headcount,
+            "csr_participation_rate": rate,
+            "by_role": sorted(by_role, key=lambda x: -x["count"]),
+            "by_department": sorted(by_department, key=lambda x: -x["count"]),
+        })
 
 
 class CSRActivitySerializer(serializers.ModelSerializer):

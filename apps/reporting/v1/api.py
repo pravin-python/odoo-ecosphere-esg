@@ -2,12 +2,35 @@
 from django.http import HttpResponse
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import exporters, services
 
 _TYPES = {"ENVIRONMENTAL", "SOCIAL", "GOVERNANCE", "ESG_SUMMARY"}
 _FORMATS = {"csv", "xlsx", "pdf"}
+
+
+class ReportPreviewView(APIView):
+    """GET /api/v1/reports/preview/?type=ESG_SUMMARY
+
+    Returns the report's data (RLS-scoped) as JSON so the Reports screen can
+    render a live table on-page before the user exports it.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        report_type = (request.query_params.get("type") or "ESG_SUMMARY").upper()
+        if report_type not in _TYPES:
+            raise ValidationError({"type": f"Unknown report type. Use one of {sorted(_TYPES)}."})
+        result = services.build_report(report_type, {})
+        return Response({
+            "title": result.title,
+            "columns": result.columns,
+            "rows": result.rows,
+            "summary": result.summary,
+        })
 
 
 class ReportExportView(APIView):

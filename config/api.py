@@ -11,9 +11,11 @@ from apps.engagement.v1 import api as gam_api
 from apps.engagement.v1.api import LeaderboardView, MyProfileView
 from apps.environmental.v1 import api as env_api
 from apps.notifications.v1 import api as notif_api
-from apps.reporting.v1.api import ReportExportView
+from apps.reporting.v1.api import ReportExportView, ReportPreviewView
 from apps.social_impact.v1 import api as soc_api
+from apps.social_impact.v1.api import DiversityView
 from apps.system_core.v1 import api as sys_api
+from apps.system_core.v1.api import GlobalConfigView
 
 router = DefaultRouter()
 
@@ -49,5 +51,8 @@ router.register("notifications", notif_api.NotificationViewSet, "notifications")
 api_urlpatterns = router.urls + [
     path("gamification/leaderboard/", LeaderboardView.as_view(), name="leaderboard"),
     path("gamification/my-profile/", MyProfileView.as_view(), name="my-profile"),
+    path("social/diversity/", DiversityView.as_view(), name="diversity"),
+    path("settings/config/", GlobalConfigView.as_view(), name="global-config"),
+    path("reports/preview/", ReportPreviewView.as_view(), name="report-preview"),
     path("reports/export/", ReportExportView.as_view(), name="report-export"),
 ]

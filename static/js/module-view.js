@@ -314,19 +314,96 @@
     load();
   }
 
-  function exportView(reportType) {
+  /** Reports: live on-page preview table (from /reports/preview/) + export buttons. */
+  function reportView(reportType) {
     return function (mount) {
-      const label = { ENVIRONMENTAL: "Environmental", SOCIAL: "Social",
-        GOVERNANCE: "Governance", ESG_SUMMARY: "ESG Summary" }[reportType];
-      mount.innerHTML = `<div class="px-6 py-10">
-        <p class="text-sm text-odoo-muted">Download the <span class="font-semibold text-odoo-text">${label}</span> report (data is scoped to your permissions):</p>
-        <div class="mt-4 flex flex-wrap gap-2">
-          ${["pdf", "xlsx", "csv"].map((f) =>
-            `<button data-fmt="${f}" class="rounded-lg border border-odoo-border bg-white px-4 py-2 text-sm font-medium text-odoo-text hover:bg-gray-50">⬇ ${f.toUpperCase()}</button>`).join("")}
-        </div></div>`;
-      mount.querySelectorAll("[data-fmt]").forEach((b) =>
-        b.addEventListener("click", () => downloadReport(reportType, b.dataset.fmt)));
+      async function load() {
+        mount.innerHTML = UI.spinner();
+        let d;
+        try {
+          const r = await API.request(`/reports/preview/?type=${reportType}`);
+          if (!r.ok) throw new Error();
+          d = await r.json();
+        } catch (e) { mount.innerHTML = UI.errorBox("Could not load report."); return; }
+
+        const cols = d.columns.map((c) => ({ label: c, render: (row) => UI.escapeHtml(row[c]) }));
+        const tableHtml = d.rows.length ? UI.table(cols, d.rows) : UI.empty("No data for this report yet.");
+        const summary = Object.entries(d.summary || {}).map(([k, v]) =>
+          `<span class="mr-4"><span class="text-odoo-muted">${UI.escapeHtml(k)}:</span> <span class="font-medium text-odoo-text">${UI.escapeHtml(v)}</span></span>`).join("");
+        const buttons = ["pdf", "xlsx", "csv"].map((f) =>
+          `<button data-fmt="${f}" class="rounded-lg border border-odoo-border bg-white px-3 py-1.5 text-xs font-medium text-odoo-text hover:bg-gray-50">⬇ ${f.toUpperCase()}</button>`).join("");
+
+        mount.innerHTML = `<div class="space-y-3 p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm font-semibold text-odoo-text">${UI.escapeHtml(d.title)}</h3>
+            <div class="flex gap-2">${buttons}</div>
+          </div>
+          ${summary ? `<div class="text-xs">${summary}</div>` : ""}
+          <div class="overflow-hidden rounded-lg border border-odoo-border">${tableHtml}</div>
+        </div>`;
+        mount.querySelectorAll("[data-fmt]").forEach((b) =>
+          b.addEventListener("click", () => downloadReport(reportType, b.dataset.fmt)));
+      }
+      load();
     };
+  }
+
+  /** Social → Diversity Dashboard (from /social/diversity/). */
+  function diversityView(mount) {
+    async function load() {
+      mount.innerHTML = UI.spinner();
+      let d;
+      try {
+        const r = await API.request("/social/diversity/");
+        if (!r.ok) throw new Error();
+        d = await r.json();
+      } catch (e) { mount.innerHTML = UI.errorBox("Could not load diversity data."); return; }
+
+      const stat = (label, val) => `<div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm">
+        <p class="text-sm text-odoo-muted">${label}</p><p class="mt-1 text-2xl font-bold text-odoo-text">${val}</p></div>`;
+      const mini = (title, rows) => `<div class="rounded-xl border border-odoo-border bg-white p-5 shadow-sm">
+        <h3 class="mb-3 text-sm font-semibold text-odoo-text">${title}</h3>
+        ${rows.map((x) => `<div class="flex justify-between border-b border-odoo-border py-1.5 text-sm last:border-0">
+          <span class="text-odoo-muted">${UI.escapeHtml(x.label)}</span><span class="font-medium text-odoo-text">${x.count}</span></div>`).join("")}</div>`;
+
+      mount.innerHTML = `<div class="space-y-4 p-4">
+        <div class="grid grid-cols-2 gap-4">
+          ${stat("Headcount", d.headcount)}
+          ${stat("CSR Participation", d.csr_participation_rate + "%")}
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          ${mini("By Role", d.by_role)}
+          ${mini("By Department", d.by_department)}
+        </div></div>`;
+    }
+    load();
+  }
+
+  /** Settings → ESG Configuration (from /settings/config/). */
+  function configView(mount) {
+    async function load() {
+      mount.innerHTML = UI.spinner();
+      let c;
+      try {
+        const r = await API.request("/settings/config/");
+        if (!r.ok) throw new Error();
+        c = await r.json();
+      } catch (e) { mount.innerHTML = UI.errorBox("Could not load configuration."); return; }
+
+      const rows = [
+        ["Reporting year", c.current_reporting_year],
+        ["Auto-emission enabled", c.auto_emission_enabled ? "Yes" : "No"],
+        ["Strict evidence required", c.strict_evidence_required ? "Yes" : "No"],
+        ["Auto-award badges", c.badge_auto_award_enabled ? "Yes" : "No"],
+        ["Default carbon reduction target", c.default_carbon_reduction_target + "%"],
+        ["ESG weights (E / S / G)", `${c.weight_environmental} / ${c.weight_social} / ${c.weight_governance}`],
+      ];
+      mount.innerHTML = `<div class="p-4"><dl class="divide-y divide-odoo-border">
+        ${rows.map(([k, v]) => `<div class="flex justify-between px-2 py-3 text-sm">
+          <dt class="text-odoo-muted">${k}</dt><dd class="font-medium text-odoo-text">${UI.escapeHtml(v)}</dd></div>`).join("")}
+      </dl></div>`;
+    }
+    load();
   }
 
   async function downloadReport(type, fmt) {
@@ -334,10 +411,6 @@
       await UI.downloadFile(`/reports/export/?type=${type}&fmt=${fmt}`, `${type}.${fmt}`);
       Toast.success(`${fmt.toUpperCase()} report downloaded.`);
     } catch (e) { Toast.error("Export failed."); }
-  }
-
-  function placeholder(text) {
-    return (mount) => { mount.innerHTML = UI.empty(text); };
   }
 
   // ── Registry: module -> tab -> renderer ──
@@ -351,7 +424,7 @@
     social: {
       csr: csrView,
       participation: participationView,
-      diversity: placeholder("Diversity metrics dashboard — coming soon."),
+      diversity: diversityView,
     },
     governance: {
       policies: tableView("/governance/policies/", COLS.policies),
@@ -367,15 +440,20 @@
       leaderboard: leaderboardView,
     },
     reports: {
-      environmental: exportView("ENVIRONMENTAL"), social: exportView("SOCIAL"),
-      governance: exportView("GOVERNANCE"), esg: exportView("ESG_SUMMARY"),
-      custom: exportView("ESG_SUMMARY"),
+      environmental: reportView("ENVIRONMENTAL"), social: reportView("SOCIAL"),
+      governance: reportView("GOVERNANCE"), esg: reportView("ESG_SUMMARY"),
+      custom: reportView("ESG_SUMMARY"),
     },
     settings: {
       departments: tableView("/catalog/departments/", COLS.departments),
       categories: tableView("/catalog/categories/", COLS.categories),
-      esg: placeholder("ESG configuration is managed in Django admin for now."),
-      notifications: placeholder("Notification settings — coming soon."),
+      esg: configView,
+      notifications: tableView("/notifications/", [
+        { label: "Title", key: "title" },
+        { label: "Category", render: (r) => UI.escapeHtml(r.category_label) },
+        { label: "Read", render: (r) => UI.boolPill(r.is_read) },
+        { label: "Date", render: (r) => UI.fmtDate(r.created_at) },
+      ]),
     },
   };
 

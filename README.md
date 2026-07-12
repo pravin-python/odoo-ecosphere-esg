@@ -200,7 +200,12 @@ DB_PORT=5432                        # use 5433 if Docker maps to 5433
 python manage.py migrate            # create the schema
 python manage.py setup_rls          # apply row-level-security policies (required)
 python manage.py createsuperuser    # your first login (admin)
+python manage.py seed_demo          # optional: populate demo data (users, ERP, ESG, gamification)
 ```
+> Every screen reads its data from the RLS-scoped APIs — nothing is hard-coded in
+> the templates or JS. `seed_demo` (idempotent) puts realistic demo data in the
+> database so the dashboards, tables, and reports have something to show. Demo
+> logins it creates use the password `Demo!2345` (e.g. `demo`, a Manager).
 > `setup_rls` is what turns on the security model. Skip it and the tables have no policies; re-run it after any model/registry change. Preview with `--dry-run`, remove with `--drop`.
 
 ### Step 5 — Run
@@ -232,6 +237,7 @@ By default `manage.py` uses `config.settings.development`. Set `DJANGO_SETTINGS_
 
 ### Handy management commands
 ```bash
+python manage.py seed_demo                   # populate/refresh demo data (idempotent)
 python manage.py setup_rls --dry-run        # preview the RLS SQL (no DB writes)
 python manage.py run_esg_maintenance        # recompute scores, flag overdue issues, policy reminders
 python manage.py flag_overdue_issues        # notify owners of overdue compliance issues
