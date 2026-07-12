@@ -138,20 +138,106 @@ All endpoints are namespaced under `/api/v1/`. Authentication is JWT (`Authoriza
 | POST | `/api/v1/auth/logout/` | Blacklist a refresh token |
 | GET/PATCH | `/api/v1/me/` | Current user's profile |
 
-## 7. Getting Started
+Module & data endpoints (all RLS-scoped, JWT-authenticated):
 
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/v1/dashboard/summary/` | Executive dashboard aggregates (scores, trend, ranking, counts) |
+| GET | `/api/v1/environmental/{emission-factors,carbon,goals}/` | Environmental tables |
+| GET | `/api/v1/catalog/{departments,products,categories}/` | Master data |
+| GET/POST | `/api/v1/social/participation/` | Participation queue; POST = submit evidence (multipart) |
+| POST | `/api/v1/social/participation/{id}/{approve,reject}/` | Manager review (approve awards XP) |
+| GET | `/api/v1/governance/{policies,acknowledgements,audits,issues}/` | Governance tables |
+| POST | `/api/v1/governance/acknowledgements/{id}/acknowledge/` | Acknowledge a policy |
+| GET | `/api/v1/gamification/{challenges,badges,rewards,leaderboard}/` | Gamification data |
+| POST | `/api/v1/gamification/rewards/{id}/redeem/` | Redeem a reward (deducts XP + stock) |
+| GET | `/api/v1/reports/export/?type=ESG_SUMMARY&fmt=pdf` | Export CSV / XLSX / PDF |
+| GET/POST | `/api/v1/notifications/` · `.../unread_count/` · `.../read_all/` | Notification bell |
+
+## 7. Getting Started (local setup)
+
+### Prerequisites
+- **Python 3.11+**
+- **PostgreSQL 16** (or Docker) — required; row-level security depends on it.
+
+### Step 1 — Virtual environment & dependencies
 ```bash
 python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+source .venv/bin/activate           # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-cp .env.example .env               # then fill in SECRET_KEY, DATABASE_URL, etc.
-
-python manage.py migrate
-python manage.py runserver
 ```
 
-By default `manage.py` runs against `config.settings.development`. Override with the `DJANGO_SETTINGS_MODULE` environment variable to point at `config.settings.production` when deploying.
+### Step 2 — Start PostgreSQL and create the role + database
+The app connects as a **non-superuser** role (`ecosphere_app`, `NOSUPERUSER NOBYPASSRLS`) so RLS is actually enforced. [`scripts/db/init.sql`](scripts/db/init.sql) creates that role and the `ecosphere` database.
+
+**Option A — Docker (recommended):**
+```bash
+docker compose up -d db             # runs scripts/db/init.sql automatically on first boot
+```
+> If port 5432 is already taken (e.g. a native Postgres), edit the port mapping in `docker-compose.yml` to `"5433:5432"` and set `DB_PORT=5433` in `.env` (Step 3).
+
+**Option B — An existing PostgreSQL** (run once as a superuser):
+```bash
+psql -U postgres -f scripts/db/init.sql
+```
+
+### Step 3 — Environment file
+```bash
+cp .env.example .env
+```
+Then set at least `SECRET_KEY` and the `DB_*` values (the defaults already match `scripts/db/init.sql`):
+```dotenv
+SECRET_KEY=change-me                # generate: python -c "import secrets; print(secrets.token_urlsafe(50))"
+DB_NAME=ecosphere
+DB_USER=ecosphere_app
+DB_PASSWORD=ecosphere
+DB_HOST=localhost
+DB_PORT=5432                        # use 5433 if Docker maps to 5433
+```
+
+### Step 4 — Migrate, apply RLS, create an admin
+```bash
+python manage.py migrate            # create the schema
+python manage.py setup_rls          # apply row-level-security policies (required)
+python manage.py createsuperuser    # your first login (admin)
+```
+> `setup_rls` is what turns on the security model. Skip it and the tables have no policies; re-run it after any model/registry change. Preview with `--dry-run`, remove with `--drop`.
+
+### Step 5 — Run
+```bash
+python manage.py runserver
+```
+- **App** → http://localhost:8000/ (redirects to the login page)
+- **Django admin** → http://localhost:8000/admin/
+- **API root** → http://localhost:8000/api/v1/
+
+By default `manage.py` uses `config.settings.development`. Set `DJANGO_SETTINGS_MODULE=config.settings.production` when deploying.
+
+### Creating login users
+- **Self sign-up** — open `/register/` (or `POST /api/v1/auth/register/`); new users get the **EMPLOYEE** role.
+- **Admin** — `python manage.py createsuperuser`.
+- **A specific role + department** — use the shell (wrap in `rls_admin()` so the department is visible under RLS):
+  ```python
+  # python manage.py shell
+  from django.contrib.auth import get_user_model
+  from apps.core.v1.rls.context import rls_admin
+  from apps.environmental.v1.models import Department
+  User = get_user_model()
+  with rls_admin():
+      dept, _ = Department.objects.get_or_create(code="OPS", defaults={"name": "Operations"})
+      User.objects.create_user("manoj", email="manoj@x.com", password="Str0ng!2345",
+                               role="MANAGER", department=dept)
+  ```
+  Roles: `ADMIN`, `MANAGER`, `GOVERNANCE_OFFICER`, `EMPLOYEE` — they drive what each user can see via RLS.
+
+### Handy management commands
+```bash
+python manage.py setup_rls --dry-run        # preview the RLS SQL (no DB writes)
+python manage.py run_esg_maintenance        # recompute scores, flag overdue issues, policy reminders
+python manage.py flag_overdue_issues        # notify owners of overdue compliance issues
+python manage.py shell < scripts/verify_rls.py   # prove RLS scoping end-to-end
+python manage.py test                       # run the test suite
+```
 
 ## 8. Hackathon Execution Timeline
 
