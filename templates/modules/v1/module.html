@@ -5,14 +5,14 @@
 {% block page_title %}{{ module_title }}{% endblock %}
 
 {% block content %}
-<div class="space-y-5">
+<div id="module-data-root" data-module="{{ module_page }}" class="space-y-5">
     {# Sub-tab bar (from the sidebar nav for this module) #}
     {% for group in nav_groups %}{% if group.page == module_page %}
     <div class="flex flex-wrap gap-1 border-b border-slate-800">
         {% for label, tab in group.items %}
         <a href="?tab={{ tab }}"
            data-tab="{{ tab }}"
-           class="tab-link -mb-px border-b-2 px-4 py-2.5 text-sm font-medium {% if request.GET.tab == tab or not request.GET.tab and forloop.first %}border-brand-500 text-white{% else %}border-transparent text-slate-400 hover:text-slate-200{% endif %}">
+           class="-mb-px border-b-2 px-4 py-2.5 text-sm font-medium {% if request.GET.tab == tab or not request.GET.tab and forloop.first %}border-brand-500 text-white{% else %}border-transparent text-slate-400 hover:text-slate-200{% endif %}">
             {{ label }}
         </a>
         {% endfor %}
@@ -21,37 +21,17 @@
 
     {# Action toolbar #}
     <div class="flex flex-wrap items-center gap-2">
-        <button type="button" class="rounded-lg {{ accent_btn }} px-4 py-2 text-sm font-semibold text-white transition">+ New</button>
-        <button type="button" class="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700 transition">Export ▾</button>
+        <button id="new-btn" type="button" class="rounded-lg {{ accent_btn }} px-4 py-2 text-sm font-semibold text-white transition">+ New</button>
+        <button id="export-btn" type="button" class="rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700 transition">⬇ Export PDF</button>
     </div>
 
-    {# Data area — populated per tab once the list API for this table is wired. #}
+    {# Data area — filled by module-view.js based on the active tab. #}
     <div class="rounded-2xl border border-slate-800 bg-slate-900">
-        <div id="module-data" class="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 text-2xl {{ accent_text }}">◲</div>
-            <p class="text-sm font-medium text-slate-300">
-                <span id="active-tab-label" class="{{ accent_text }}"></span> data view
-            </p>
-            <p class="max-w-md text-sm text-slate-500">
-                This screen's layout matches the approved mockup. The live data table
-                (backed by an RLS-scoped API endpoint) wires up here next.
-            </p>
-        </div>
+        <div id="module-data">{% include "include/_spinner.html" %}</div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-  // Reflect the active tab label from the URL (or the first tab by default).
-  (function () {
-    const params = new URLSearchParams(window.location.search);
-    const active = params.get("tab");
-    const links = document.querySelectorAll("[data-tab]");
-    let label = links[0] ? links[0].textContent.trim() : "";
-    links.forEach((a) => { if (a.dataset.tab === active) label = a.textContent.trim(); });
-    const el = document.getElementById("active-tab-label");
-    if (el) el.textContent = label;
-  })();
-</script>
+<script src="{% static 'js/module-view.js' %}"></script>
 {% endblock %}

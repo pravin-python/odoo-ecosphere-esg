@@ -75,10 +75,12 @@
       return true;
     },
 
-    /** Authenticated fetch. Retries once after a 401 by refreshing the token. */
+    /** Authenticated fetch. Retries once after a 401 by refreshing the token.
+     *  When the body is FormData, the browser sets the multipart Content-Type. */
     async request(path, options = {}, retry = true) {
+      const isForm = options.body instanceof FormData;
       const headers = Object.assign(
-        { "Content-Type": "application/json" },
+        isForm ? {} : { "Content-Type": "application/json" },
         options.headers || {}
       );
       if (this.access) headers["Authorization"] = `Bearer ${this.access}`;

@@ -25,6 +25,25 @@
                     <h1 class="text-lg font-semibold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
                 </div>
                 <div class="flex items-center gap-3">
+                    {# Notification bell #}
+                    <div class="relative">
+                        <button id="notif-btn" type="button"
+                                class="relative rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                            </svg>
+                            <span id="notif-badge" class="absolute -right-0.5 -top-0.5 hidden min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[10px] font-bold leading-[18px] text-white"></span>
+                        </button>
+                        <div id="notif-panel"
+                             class="absolute right-0 z-50 mt-2 hidden w-80 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-xl">
+                            <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+                                <span class="text-sm font-semibold text-white">Notifications</span>
+                                <button id="notif-read-all" class="text-xs text-brand-400 hover:text-brand-300">Mark all read</button>
+                            </div>
+                            <ul id="notif-list" class="max-h-80 divide-y divide-slate-800 overflow-y-auto"></ul>
+                        </div>
+                    </div>
+
                     <div class="hidden text-right sm:block">
                         <p id="nav-user-name" class="text-sm font-medium text-white">&nbsp;</p>
                         <p id="nav-user-role" class="text-xs text-slate-400">&nbsp;</p>
@@ -43,7 +62,10 @@
     </div>
 
     <script src="{% static 'js/api.js' %}"></script>
+    <script src="{% static 'js/toast.js' %}"></script>
+    <script src="{% static 'js/ui.js' %}"></script>
     <script src="{% static 'js/app-shell.js' %}"></script>
+    <script src="{% static 'js/notifications.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
