@@ -65,17 +65,22 @@ odoo-ecosphere-esg/
 │   ├── wsgi.py
 │   └── asgi.py
 │
-├── apps/                        # every domain app is versioned
-│   └── core/
-│       └── v1/                  # apps.core.v1  (label: core_v1)
-│           ├── models.py
-│           ├── views.py
-│           ├── urls.py
-│           ├── serializers.py
-│           ├── admin.py
-│           ├── apps.py
-│           ├── migrations/
-│           └── tests/
+├── apps/                        # every domain app is versioned under v1/
+│   ├── core/v1/                 # shared kernel: base models, enums, managers,
+│   │                            #   ActivityLog + audit middleware, permissions
+│   ├── accounts/v1/             # custom User + JWT auth + role permissions
+│   ├── system_core/v1/          # GlobalConfiguration singleton (feature flags)
+│   ├── environmental/v1/        # Department, EmissionFactor, CarbonTransaction,
+│   │                            #   SustainabilityGoal + emission service
+│   ├── fleet_ops/v1/            # Vehicle, FleetLog        (ERP mock + signal)
+│   ├── procurement/v1/          # Vendor, PurchaseOrder    (ERP mock + signal)
+│   ├── manufacturing/v1/        # ProductionOrder, ResourceUsage (ERP + signal)
+│   ├── social_impact/v1/        # CSRActivity, EmployeeParticipation (evidence)
+│   ├── compliance/v1/           # ESGPolicy, Audit, ComplianceIssue (overdue)
+│   ├── engagement/v1/           # EmployeeProfile, Challenge, Badge, Reward, ...
+│   └── notifications/v1/        # Notification (automated alerts)
+│                                # each app/v1: models, admin, apps, signals,
+│                                #   services, migrations/, tests/
 │
 ├── templates/
 │   ├── layout/                  # base/master layouts
@@ -86,9 +91,43 @@ odoo-ecosphere-esg/
 └── media/
 ```
 
-**Planned domain apps** (following the same `apps/<name>/v1/` pattern): ERP mock data (`FleetLog`, `PurchaseOrder`, `ExpenseRecord`), ESG metrics (`EmissionFactor`, `CarbonTransaction`), Social/CSR (`Challenge`, `EmployeeParticipation`), Governance (`Audit`, `ComplianceIssue`), and Gamification (`BadgeUnlockRule`, `Reward`) — each with its own `models.py`, `views.py`, `signals.py`, and `tests/`.
+### Apps at a glance
 
-## 6. Getting Started
+| App | Category | Key models | Automation |
+|---|---|---|---|
+| `system_core` | Config | `GlobalConfiguration` | Org-wide feature flags |
+| `fleet_ops` | ERP mock | `Vehicle`, `FleetLog` | FleetLog save → CO2e |
+| `procurement` | ERP mock | `Vendor`, `PurchaseOrder` | PO save → CO2e |
+| `manufacturing` | ERP mock | `ProductionOrder`, `ResourceUsage` | Usage save → CO2e + waste |
+| `environmental` | ESG (E) | `Department`, `EmissionFactor`, `CarbonTransaction`, `SustainabilityGoal` | Central emission service |
+| `social_impact` | ESG (S) | `CSRActivity`, `EmployeeParticipation` | Approval → XP award |
+| `compliance` | ESG (G) | `ESGPolicy`, `Audit`, `ComplianceIssue` | Overdue detection + alerts |
+| `engagement` | Gamification | `EmployeeProfile`, `Challenge`, `Badge`, `BadgeUnlockRule`, `Reward`, `RewardRedemption` | XP → auto badges, reward redemption |
+| `accounts` | Auth | custom `User` (roles) | Auto-creates gamification profile |
+| `notifications` | Alerts | `Notification` | Written by signals/commands |
+
+### Security & architecture notes
+
+- **JWT auth** (`djangorestframework-simplejwt`) with **refresh-token rotation + blacklist** — a leaked refresh token has a short useful life. Role is embedded in the token so the frontend can gate UI without an extra round-trip.
+- **Role-based permissions** (`apps/core/v1/permissions.py`) — `IsAdmin`, `IsManager`, `IsGovernanceOfficer`, `IsOwnerOrReadOnly`.
+- **Audit trail** — `ActivityLogMiddleware` persists every mutating API request (who / what / when / IP) for governance.
+- **Emission logic lives in one service** (`environmental/v1/services.py`); every ERP signal calls it, so the carbon maths is never duplicated.
+- **Overdue compliance** is a live queryset/property (`ComplianceIssue.objects.overdue()`, `issue.is_overdue`) plus a `flag_overdue_issues` management command for scheduled alerts — cheaper and more correct than a per-request middleware.
+- **Rate limiting** and **pagination** enabled globally in DRF.
+
+## 6. API Overview
+
+All endpoints are namespaced under `/api/v1/`. Authentication is JWT (`Authorization: Bearer <access>`).
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/v1/auth/register/` | Create an account |
+| POST | `/api/v1/auth/login/` | Obtain access + refresh tokens |
+| POST | `/api/v1/auth/refresh/` | Rotate access token |
+| POST | `/api/v1/auth/logout/` | Blacklist a refresh token |
+| GET/PATCH | `/api/v1/me/` | Current user's profile |
+
+## 7. Getting Started
 
 ```bash
 python -m venv .venv
@@ -103,7 +142,7 @@ python manage.py runserver
 
 By default `manage.py` runs against `config.settings.development`. Override with the `DJANGO_SETTINGS_MODULE` environment variable to point at `config.settings.production` when deploying.
 
-## 7. Hackathon Execution Timeline
+## 8. Hackathon Execution Timeline
 
 | Hours | Focus |
 |---|---|

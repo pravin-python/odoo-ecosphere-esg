@@ -2,6 +2,7 @@
 Base settings shared by every environment.
 Environment-specific overrides live in development.py / production.py.
 """
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -32,15 +33,31 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
 ]
 
-# Each app is versioned, e.g. apps/core/v1 -> "apps.core.v1"
+# Each app is versioned, e.g. apps/core/v1 -> "apps.core.v1".
+# accounts must load early because it provides AUTH_USER_MODEL; environmental
+# is referenced by the ERP apps via string FKs.
 LOCAL_APPS = [
     "apps.core.v1",
+    "apps.accounts.v1",
+    "apps.system_core.v1",
+    "apps.environmental.v1",
+    "apps.fleet_ops.v1",
+    "apps.procurement.v1",
+    "apps.manufacturing.v1",
+    "apps.social_impact.v1",
+    "apps.compliance.v1",
+    "apps.engagement.v1",
+    "apps.notifications.v1",
+    "apps.reporting.v1",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+AUTH_USER_MODEL = "accounts_v1.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -52,6 +69,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Security/governance audit trail — must run after AuthenticationMiddleware
+    # so request.user is populated.
+    "apps.core.v1.middleware.ActivityLogMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -118,13 +138,37 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --------------------------------------------------------------------------
-# Django REST Framework
+# Django REST Framework + JWT
 # --------------------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "30/min", "user": "120/min"},
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    # Security: issue a fresh refresh token on each use and blacklist the old
+    # one, so a leaked refresh token has a short useful life.
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+# In-memory cache is fine for dev; production overrides with Redis/Memcached.
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
 }
