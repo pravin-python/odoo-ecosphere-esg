@@ -3,9 +3,12 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.environmental.v1.dashboard_api import DashboardSummaryView
+
 # Versioned API surface. Each app owns its own v1 urls module.
 api_v1_patterns = [
     path("", include("apps.accounts.v1.urls")),
+    path("dashboard/summary/", DashboardSummaryView.as_view(), name="dashboard-summary"),
 ]
 
 urlpatterns = [
