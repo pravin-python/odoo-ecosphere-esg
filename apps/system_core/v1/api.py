@@ -1,8 +1,11 @@
-"""Master-data read APIs: products, categories, and global config (Settings)."""
+"""Master-data APIs: products, categories, global config, user choices."""
+from django.contrib.auth import get_user_model
 from rest_framework import serializers, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.core.v1.permissions import CanManage
 
 from .models import Category, GlobalConfiguration, ProductESGProfile
 
@@ -26,11 +29,37 @@ class GlobalConfigView(APIView):
         })
 
 
+class UserChoicesView(APIView):
+    """Lightweight user list for owner/assignee dropdowns (id + display name).
+
+    Scoped to the caller's department unless they hold a privileged role.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        User = get_user_model()
+        user = request.user
+        privileged = user.is_superuser or getattr(user, "role", None) in ("ADMIN", "GOVERNANCE_OFFICER")
+        qs = User.objects.filter(is_active=True)
+        if not privileged and user.department_id:
+            qs = qs.filter(department_id=user.department_id)
+        return Response([
+            {"id": u.id, "name": u.get_full_name() or u.username}
+            for u in qs.order_by("username")
+        ])
+
+
 class ProductESGProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductESGProfile
         fields = ("id", "public_id", "name", "sku", "carbon_footprint_kg",
                   "recyclable", "ethical_sourcing_score", "is_active")
+
+    def validate_ethical_sourcing_score(self, value):
+        if not 0 <= value <= 100:
+            raise serializers.ValidationError("Score must be between 0 and 100.")
+        return value
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -41,11 +70,15 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ("id", "public_id", "name", "type", "type_label", "description", "is_active")
 
 
-class ProductESGProfileViewSet(viewsets.ReadOnlyModelViewSet):
+class ProductESGProfileViewSet(viewsets.ModelViewSet):
     queryset = ProductESGProfile.objects.all()
     serializer_class = ProductESGProfileSerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]

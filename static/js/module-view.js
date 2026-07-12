@@ -469,16 +469,17 @@
     const tab = params.get("tab") || (firstLink ? firstLink.dataset.tab : null);
 
     const render = tabs[tab];
-    if (render) render(mount);
-    else mount.innerHTML = UI.empty("This section is not available yet.");
+    function reload() { if (render) render(mount); }
+    reload();
+    if (!render) mount.innerHTML = UI.empty("This section is not available yet.");
 
     // Wire the top toolbar Export button to this module's report.
     const exportBtn = document.getElementById("export-btn");
     if (exportBtn) exportBtn.addEventListener("click", () =>
       downloadReport(MODULE_REPORT[module] || "ESG_SUMMARY", "pdf"));
 
+    // Wire the "+ New" button to the schema-driven create form for this tab.
     const newBtn = document.getElementById("new-btn");
-    if (newBtn) newBtn.addEventListener("click", () =>
-      Toast.info("Create forms are available in Django admin; inline forms coming soon."));
+    if (newBtn) newBtn.addEventListener("click", () => window.Forms.open(module, tab, reload));
   });
 })();

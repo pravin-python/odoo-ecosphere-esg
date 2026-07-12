@@ -30,9 +30,18 @@ class Notification(TimeStampedModel):
 
 
 def notify(recipient, title, *, message="", category=Notification.Category.SYSTEM):
-    """Convenience helper used by signals across the platform."""
+    """Convenience helper used by signals across the platform.
+
+    Notifications are system-generated for a specific recipient, so the insert
+    runs under rls_admin(): the acting user (e.g. a manager creating a
+    compliance issue) is usually not the recipient, and the owner-scoped RLS
+    policy on Notification would otherwise reject the row.
+    """
     if recipient is None:
         return None
-    return Notification.objects.create(
-        recipient=recipient, title=title, message=message, category=category
-    )
+    from apps.core.v1.rls.context import rls_admin
+
+    with rls_admin():
+        return Notification.objects.create(
+            recipient=recipient, title=title, message=message, category=category
+        )

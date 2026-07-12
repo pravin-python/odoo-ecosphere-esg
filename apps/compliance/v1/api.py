@@ -1,10 +1,16 @@
 """Governance APIs: policies, acknowledgements, audits, compliance issues."""
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.core.v1.permissions import CanManage
+from apps.environmental.v1.models import Department
+
 from .models import Audit, ComplianceIssue, ESGPolicy, PolicyAcknowledgement
+
+User = get_user_model()
 
 
 class ESGPolicySerializer(serializers.ModelSerializer):
@@ -27,18 +33,21 @@ class PolicyAcknowledgementSerializer(serializers.ModelSerializer):
 
 
 class AuditSerializer(serializers.ModelSerializer):
+    department = serializers.PrimaryKeyRelatedField(queryset=Department.objects.all())
     department_name = serializers.CharField(source="department.name", read_only=True)
     audit_type_label = serializers.CharField(source="get_audit_type_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = Audit
-        fields = ("id", "public_id", "title", "department_name", "audit_type",
+        fields = ("id", "public_id", "title", "department", "department_name", "audit_type",
                   "audit_type_label", "scheduled_date", "status", "status_label")
 
 
 class ComplianceIssueSerializer(serializers.ModelSerializer):
+    audit = serializers.PrimaryKeyRelatedField(queryset=Audit.objects.all())
     audit_title = serializers.CharField(source="audit.title", read_only=True)
+    owner = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     owner_name = serializers.CharField(source="owner.get_full_name", read_only=True)
     severity_label = serializers.CharField(source="get_severity_display", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
@@ -46,13 +55,16 @@ class ComplianceIssueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComplianceIssue
-        fields = ("id", "public_id", "title", "audit_title", "owner_name", "severity",
-                  "severity_label", "due_date", "status", "status_label", "is_overdue")
+        fields = ("id", "public_id", "title", "description", "audit", "audit_title",
+                  "owner", "owner_name", "severity", "severity_label", "due_date",
+                  "status", "status_label", "is_overdue")
 
 
-class ESGPolicyViewSet(viewsets.ReadOnlyModelViewSet):
+class ESGPolicyViewSet(viewsets.ModelViewSet):
     queryset = ESGPolicy.objects.all()
     serializer_class = ESGPolicySerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]
 
 
 class PolicyAcknowledgementViewSet(viewsets.ReadOnlyModelViewSet):
@@ -68,11 +80,18 @@ class PolicyAcknowledgementViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(self.get_serializer(ack).data)
 
 
-class AuditViewSet(viewsets.ReadOnlyModelViewSet):
+class AuditViewSet(viewsets.ModelViewSet):
     queryset = Audit.objects.select_related("department").all()
     serializer_class = AuditSerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]
+
+    def perform_create(self, serializer):
+        serializer.save(auditor=self.request.user)
 
 
-class ComplianceIssueViewSet(viewsets.ReadOnlyModelViewSet):
+class ComplianceIssueViewSet(viewsets.ModelViewSet):
     queryset = ComplianceIssue.objects.select_related("audit", "owner").all()
     serializer_class = ComplianceIssueSerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]

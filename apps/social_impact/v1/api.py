@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.v1.enums import ApprovalStatus
+from apps.core.v1.permissions import CanManage
 
 from .models import CSRActivity, EmployeeParticipation
 
@@ -65,6 +66,12 @@ class CSRActivitySerializer(serializers.ModelSerializer):
         fields = ("id", "public_id", "title", "description", "category", "category_label",
                   "xp_reward", "start_date", "end_date", "is_active", "participant_count")
 
+    def validate(self, attrs):
+        start, end = attrs.get("start_date"), attrs.get("end_date")
+        if start and end and end < start:
+            raise serializers.ValidationError({"end_date": "End date must be on or after the start date."})
+        return attrs
+
 
 class EmployeeParticipationSerializer(serializers.ModelSerializer):
     activity = serializers.PrimaryKeyRelatedField(queryset=CSRActivity.objects.all())
@@ -90,9 +97,11 @@ class EmployeeParticipationSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class CSRActivityViewSet(viewsets.ReadOnlyModelViewSet):
+class CSRActivityViewSet(viewsets.ModelViewSet):
     queryset = CSRActivity.objects.all()
     serializer_class = CSRActivitySerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]
 
 
 class EmployeeParticipationViewSet(viewsets.ModelViewSet):

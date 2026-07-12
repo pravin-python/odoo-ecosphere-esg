@@ -33,6 +33,12 @@ class IsGovernanceOfficer(RolePermission):
     allowed_roles = ("ADMIN", "GOVERNANCE_OFFICER")
 
 
+class CanManage(RolePermission):
+    """Create/manage records: staff roles only; everyone else is read-only."""
+
+    allowed_roles = ("ADMIN", "MANAGER", "GOVERNANCE_OFFICER")
+
+
 class IsOwnerOrReadOnly(BasePermission):
     """Object-level: only the owning user may modify; others read-only."""
 

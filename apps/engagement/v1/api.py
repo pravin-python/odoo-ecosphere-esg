@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.v1.permissions import CanManage
+
 from .leaderboard import employee_leaderboard
 from .models import Badge, Challenge, ChallengeParticipation, EmployeeProfile, Reward
 from .services import RedemptionError, get_or_create_profile, redeem_reward
@@ -19,6 +21,12 @@ class ChallengeSerializer(serializers.ModelSerializer):
         fields = ("id", "public_id", "title", "description", "xp_reward", "difficulty",
                   "difficulty_label", "start_date", "end_date", "deadline",
                   "status", "status_label", "is_active")
+
+    def validate(self, attrs):
+        start, end = attrs.get("start_date"), attrs.get("end_date")
+        if start and end and end < start:
+            raise serializers.ValidationError({"end_date": "End date must be on or after the start date."})
+        return attrs
 
 
 class ChallengeParticipationSerializer(serializers.ModelSerializer):
@@ -46,10 +54,17 @@ class RewardSerializer(serializers.ModelSerializer):
         fields = ("id", "public_id", "name", "description", "points_required",
                   "stock_count", "is_active")
 
+    def validate_points_required(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Points required must be greater than zero.")
+        return value
 
-class ChallengeViewSet(viewsets.ReadOnlyModelViewSet):
+
+class ChallengeViewSet(viewsets.ModelViewSet):
     queryset = Challenge.objects.all()
     serializer_class = ChallengeSerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]
 
 
 class ChallengeParticipationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -57,14 +72,21 @@ class ChallengeParticipationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ChallengeParticipationSerializer
 
 
-class BadgeViewSet(viewsets.ReadOnlyModelViewSet):
+class BadgeViewSet(viewsets.ModelViewSet):
     queryset = Badge.objects.all()
     serializer_class = BadgeSerializer
+    permission_classes = [CanManage]
+    http_method_names = ["get", "post"]
 
 
-class RewardViewSet(viewsets.ReadOnlyModelViewSet):
+class RewardViewSet(viewsets.ModelViewSet):
     queryset = Reward.objects.filter(is_active=True)
     serializer_class = RewardSerializer
+    http_method_names = ["get", "post"]
+
+    def get_permissions(self):
+        # Creating rewards is a staff action; redeeming/listing is for everyone.
+        return [CanManage()] if self.action == "create" else [IsAuthenticated()]
 
     @action(detail=True, methods=["post"])
     def redeem(self, request, pk=None):
