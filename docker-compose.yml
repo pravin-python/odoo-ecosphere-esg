@@ -1,0 +1,30 @@
+# Local PostgreSQL for EcoSphere (row-level security requires Postgres).
+#
+#   docker compose up -d db
+#   # then, in your venv:
+#   python manage.py migrate
+#   python manage.py setup_rls
+#
+# The init script creates the NON-superuser `ecosphere_app` role that Django
+# connects as, so RLS policies are enforced.
+services:
+  db:
+    image: postgres:16
+    container_name: ecosphere_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ecosphere_pgdata:/var/lib/postgresql/data
+      - ./scripts/db/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ecosphere_pgdata:

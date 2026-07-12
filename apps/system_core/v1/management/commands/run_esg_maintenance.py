@@ -23,6 +23,14 @@ class Command(BaseCommand):
                             help="Reporting year to score (defaults to configured year).")
 
     def handle(self, *args, **options):
+        from apps.core.v1.rls.context import rls_admin
+
+        # Cross-department maintenance with no request user: bypass RLS for the
+        # whole run so scoring/notification queries see every row.
+        with rls_admin():
+            self._run(options)
+
+    def _run(self, options):
         from apps.compliance.v1.models import (
             ComplianceIssue,
             ESGPolicy,

@@ -35,7 +35,16 @@ Employees browse active CSR challenges (e.g. "Plant a Tree", "Cycle to Work") an
 Governance officers log `ComplianceIssue` records against audits, each with an `owner` and `due_date`. A custom manager/middleware flags any issue where `current_date > due_date` as **Overdue**, surfacing it on the executive dashboard.
 
 ### 🎮 Gamification — The Engagement Engine
-Approving a CSR participation triggers a signal that awards XP to the user's profile. A follow-up signal checks the new XP total against `BadgeUnlockRule` thresholds and auto-awards badges via a many-to-many relationship. Users redeem XP in a Rewards Store, which decrements the reward's stock.
+Approving a CSR participation *or a Challenge participation* triggers a signal that awards XP to the user's profile. A follow-up signal checks the new XP total against `BadgeUnlockRule` thresholds and auto-awards badges via a many-to-many relationship. Users redeem XP in a Rewards Store, which decrements the reward's stock. Employee and department leaderboards (`apps/engagement/v1/leaderboard.py`) rank participants by XP and ESG performance.
+
+### 📊 ESG Scoring Engine
+`apps/environmental/v1/scoring.py` turns raw operational data into comparable 0–100 scores. Each department gets an **Environmental** (goal achievement + relative emission performance), **Social** (approved CSR/Challenge participation rate), and **Governance** (policy-acknowledgement rate + compliance health) score. These roll up into a **Department Total** using configurable weights on `GlobalConfiguration` (default E 40 / S 30 / G 30), and finally into an **Overall ESG Score** (mean of department totals). Snapshots are persisted per reporting year in `DepartmentScore` for trend charts.
+
+### 📈 Reporting & Export
+`apps/reporting/v1` builds Environmental, Social, Governance, and ESG Summary reports through a single `build_report(type, filters)` entry point (the Custom Report Builder), with filters for department, date range, module, employee, challenge, and ESG category. Any report exports to **CSV, XLSX (openpyxl), or PDF (reportlab)** via `exporters.export_report(result, fmt)`. Report definitions can be saved as `SavedReport` rows.
+
+### 🔔 Automation & Maintenance
+Signals raise in-app notifications for new/overdue compliance issues, CSR/Challenge approval decisions, and badge unlocks. The `run_esg_maintenance` management command (cron/scheduler friendly) recomputes all scores, flags overdue issues, and enrols + reminds employees on pending policy acknowledgements.
 
 ## 4. Tech Stack
 
@@ -43,8 +52,9 @@ Approving a CSR participation triggers a signal that awards XP to the user's pro
 |---|---|
 | Backend | Python 3.1x, Django 5.x (ORM, Signals, Class-Based Views) |
 | Frontend | Django Templates + Bootstrap 5 + Chart.js |
-| Database | PostgreSQL (production) / SQLite3 (local development) |
-| REST layer | Django REST Framework |
+| Database | **PostgreSQL** (required — row-level security) |
+| REST layer | Django REST Framework + JWT (SimpleJWT) |
+| Access control | RBAC + PostgreSQL **row-level security** (see [docs/rls.md](docs/rls.md)) |
 
 ## 5. Project Structure
 
@@ -108,6 +118,7 @@ odoo-ecosphere-esg/
 
 ### Security & architecture notes
 
+- **Database row-level security (RLS)** — PostgreSQL policies filter every query by the requesting user's role and department, so a user only ever sees rows they're permitted to (full matrix + design in [docs/rls.md](docs/rls.md)). Enforced by the DB, not just the ORM — a forgotten `.filter()` can't leak data. Apply with `manage.py setup_rls`.
 - **JWT auth** (`djangorestframework-simplejwt`) with **refresh-token rotation + blacklist** — a leaked refresh token has a short useful life. Role is embedded in the token so the frontend can gate UI without an extra round-trip.
 - **Role-based permissions** (`apps/core/v1/permissions.py`) — `IsAdmin`, `IsManager`, `IsGovernanceOfficer`, `IsOwnerOrReadOnly`.
 - **Audit trail** — `ActivityLogMiddleware` persists every mutating API request (who / what / when / IP) for governance.

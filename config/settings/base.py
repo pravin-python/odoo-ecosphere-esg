@@ -72,6 +72,10 @@ MIDDLEWARE = [
     # Security/governance audit trail — must run after AuthenticationMiddleware
     # so request.user is populated.
     "apps.core.v1.middleware.ActivityLogMiddleware",
+    # Row-level security context — set/reset per request. Listed last so it is
+    # the innermost middleware (closest to the view): it sets the DB session
+    # context for session-auth requests and always clears it afterwards.
+    "apps.core.v1.rls.middleware.RLSContextMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -96,11 +100,20 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # --------------------------------------------------------------------------
-# Database (overridden per environment)
+# Database
 # --------------------------------------------------------------------------
+# PostgreSQL is required for row-level security. The app connects as a
+# non-superuser role (NOSUPERUSER NOBYPASSRLS) so RLS policies are enforced;
+# see docs/rls.md and scripts/db/init.sql.
 DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
+    "default": env.db(
+        "DATABASE_URL",
+        default="postgres://ecosphere_app:ecosphere@localhost:5432/ecosphere",
+    )
 }
+# Reuse connections; RLSContextMiddleware always resets the session GUCs in a
+# finally block, so a pooled connection never leaks one user's context.
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 
 # --------------------------------------------------------------------------
 # Password validation
@@ -144,9 +157,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    # RLS-aware authenticators: on success they push the user's identity into
+    # the Postgres session so the database row-filters every query.
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+        "apps.core.v1.authentication.RLSJWTAuthentication",
+        "apps.core.v1.authentication.RLSSessionAuthentication",
     ],
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
