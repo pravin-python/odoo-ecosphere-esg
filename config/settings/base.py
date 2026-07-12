@@ -6,6 +6,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 # config/settings/base.py -> config/settings -> config -> <project root>
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -114,6 +115,14 @@ DATABASES = {
 # Reuse connections; RLSContextMiddleware always resets the session GUCs in a
 # finally block, so a pooled connection never leaks one user's context.
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
+
+# This project is PostgreSQL-only (row-level security depends on it). Reject any
+# other engine up front rather than failing mysteriously later.
+if "postgresql" not in DATABASES["default"]["ENGINE"]:
+    raise ImproperlyConfigured(
+        "EcoSphere requires PostgreSQL. Set DATABASE_URL to a postgres:// DSN "
+        f"(got engine {DATABASES['default']['ENGINE']!r})."
+    )
 
 # --------------------------------------------------------------------------
 # Password validation
