@@ -11,9 +11,17 @@ from .services import award_xp, get_or_create_profile
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL, dispatch_uid="create_employee_profile")
 def create_profile_for_user(sender, instance, created, **kwargs):
-    """Every new user gets a gamification profile automatically."""
+    """Every new user gets a gamification profile automatically.
+
+    Runs under rls_admin() because user creation happens in contexts with no
+    RLS session (createsuperuser, the public register endpoint, data loaders),
+    where the owner WITH CHECK on EmployeeProfile would otherwise reject the row.
+    """
     if created:
-        get_or_create_profile(instance)
+        from apps.core.v1.rls.context import rls_admin
+
+        with rls_admin():
+            get_or_create_profile(instance)
 
 
 @receiver(post_save, sender=ChallengeParticipation, dispatch_uid="challenge_participation_xp")

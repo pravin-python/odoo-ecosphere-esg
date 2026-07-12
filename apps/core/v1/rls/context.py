@@ -63,9 +63,13 @@ def rls_admin(*, conn=None):
         yield
         return
     with conn.cursor() as cur:
+        # Save the current value so nesting (e.g. a superuser request that
+        # already set bypass) restores it correctly instead of forcing "off".
+        cur.execute("SELECT current_setting('app.bypass_rls', true)")
+        previous = cur.fetchone()[0] or "off"
         _set(cur, "app.bypass_rls", "on")
     try:
         yield
     finally:
         with conn.cursor() as cur:
-            _set(cur, "app.bypass_rls", "off")
+            _set(cur, "app.bypass_rls", previous)

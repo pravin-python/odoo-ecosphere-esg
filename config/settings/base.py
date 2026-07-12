@@ -2,6 +2,7 @@
 Base settings shared by every environment.
 Environment-specific overrides live in development.py / production.py.
 """
+import os
 from datetime import timedelta
 from pathlib import Path
 
@@ -108,20 +109,24 @@ ASGI_APPLICATION = "config.asgi.application"
 # non-superuser role (NOSUPERUSER NOBYPASSRLS) so RLS policies are enforced;
 # see docs/rls.md and scripts/db/init.sql.
 DATABASES = {
-    "default": env.db(
-        "DATABASE_URL",
-        default="postgres://ecosphere_app:ecosphere@localhost:5432/ecosphere",
-    )
+    "default": {
+        "ENGINE": os.getenv("DB_ENGINE", default="django.db.backends.postgresql"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST", default="localhost"),
+        "PORT": os.getenv("DB_PORT", default="5432"),
+        # Reuse connections; RLSContextMiddleware always resets the session GUCs
+        # in a finally block, so a pooled connection never leaks user context.
+        "CONN_MAX_AGE": int(os.getenv("CONN_MAX_AGE", "60")),
+    }
 }
-# Reuse connections; RLSContextMiddleware always resets the session GUCs in a
-# finally block, so a pooled connection never leaks one user's context.
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 
 # This project is PostgreSQL-only (row-level security depends on it). Reject any
 # other engine up front rather than failing mysteriously later.
 if "postgresql" not in DATABASES["default"]["ENGINE"]:
     raise ImproperlyConfigured(
-        "EcoSphere requires PostgreSQL. Set DATABASE_URL to a postgres:// DSN "
+        "EcoSphere requires PostgreSQL. Set DB_ENGINE to a postgresql backend "
         f"(got engine {DATABASES['default']['ENGINE']!r})."
     )
 
