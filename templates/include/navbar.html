@@ -1,3 +1,25 @@
-<nav class="navbar">
-    <a href="{% url 'core_v1:home' %}" class="navbar__brand">Ecosphere ESG</a>
+{% load static %}
+<nav class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+            <a href="{% url 'core_v1:dashboard' %}" class="flex items-center gap-2">
+                <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white text-lg font-bold">E</span>
+                <span class="text-lg font-semibold text-slate-900">EcoSphere<span class="text-brand-600"> ESG</span></span>
+            </a>
+
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex sm:flex-col sm:items-end">
+                    <span id="nav-user-name" class="text-sm font-medium text-slate-900">&nbsp;</span>
+                    <span id="nav-user-role" class="text-xs text-slate-500">&nbsp;</span>
+                </div>
+                <button id="logout-btn" type="button"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                    </svg>
+                    Sign out
+                </button>
+            </div>
+        </div>
+    </div>
 </nav>

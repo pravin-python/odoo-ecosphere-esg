@@ -51,7 +51,7 @@ Signals raise in-app notifications for new/overdue compliance issues, CSR/Challe
 | Layer | Technology |
 |---|---|
 | Backend | Python 3.1x, Django 5.x (ORM, Signals, Class-Based Views) |
-| Frontend | Django Templates + Bootstrap 5 + Chart.js |
+| Frontend | Django Templates + **Tailwind CSS** (utility-only, no custom CSS) + vanilla-JS AJAX against the JWT API |
 | Database | **PostgreSQL** (required — row-level security) |
 | REST layer | Django REST Framework + JWT (SimpleJWT) |
 | Access control | RBAC + PostgreSQL **row-level security** (see [docs/rls.md](docs/rls.md)) |
@@ -161,7 +161,7 @@ By default `manage.py` runs against `config.settings.development`. Override with
 | 3–5 | Core engine — Mock ERP models, `EmissionFactor`, and `signals.py` carbon-automation logic |
 | 6–8 | Data collection — Social & Governance models/forms, file-upload validation, compliance due dates |
 | 9–11 | Gamification — XP logic, auto-badge signals, reward redemption |
-| 12+ | UI & polish — Bootstrap 5 templates, Chart.js dashboards, CSV/PDF export |
+| 12+ | UI & polish — Tailwind templates, Chart.js dashboards, CSV/PDF export |
 
 ---
 
