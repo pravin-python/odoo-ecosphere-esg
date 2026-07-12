@@ -16,6 +16,8 @@
     difficulty: [["EASY", "Easy"], ["MEDIUM", "Medium"], ["HARD", "Hard"]],
     tier: [["BRONZE", "Bronze"], ["SILVER", "Silver"], ["GOLD", "Gold"]],
     catType: [["CSR_ACTIVITY", "CSR Activity"], ["CHALLENGE", "Challenge"]],
+    reportType: [["ENVIRONMENTAL", "Environmental"], ["SOCIAL", "Social"],
+      ["GOVERNANCE", "Governance"], ["ESG_SUMMARY", "ESG Summary"]],
   };
 
   const dateOrder = (v) =>
@@ -46,6 +48,16 @@
           { name: "recyclable", label: "Recyclable", type: "checkbox", default: false },
         ],
       },
+      carbon: {
+        title: "New Fleet Log (auto-generates CO₂e)", endpoint: "/erp/fleet-logs/",
+        fields: [
+          { name: "vehicle", label: "Vehicle", type: "select", required: true, optionsUrl: "/erp/vehicles/", optionValue: "id", optionLabel: "name" },
+          { name: "log_date", label: "Log date", type: "date", required: true },
+          { name: "fuel_quantity", label: "Fuel quantity (liters)", type: "number", required: true, min: 0, step: "0.01" },
+          { name: "distance_km", label: "Distance (km)", type: "number", min: 0, step: "0.01" },
+          { name: "notes", label: "Notes", type: "text" },
+        ],
+      },
       goals: {
         title: "New Environmental Goal", endpoint: "/environmental/goals/",
         fields: [
@@ -70,6 +82,13 @@
           { name: "end_date", label: "End date", type: "date", required: true },
         ],
       },
+      participation: {
+        title: "Submit CSR Participation", endpoint: "/social/participation/",
+        fields: [
+          { name: "activity", label: "Activity", type: "select", required: true, optionsUrl: "/social/activities/", optionValue: "id", optionLabel: "title" },
+          { name: "proof_file", label: "Evidence (image or PDF)", type: "file", accept: "image/*,application/pdf" },
+        ],
+      },
     },
     governance: {
       policies: {
@@ -79,6 +98,12 @@
           { name: "pillar", label: "Pillar", type: "select", required: true, options: E.pillar },
           { name: "version", label: "Version", type: "text", default: "1.0" },
           { name: "effective_date", label: "Effective date", type: "date", required: true },
+        ],
+      },
+      acks: {
+        title: "Enrol in a Policy", endpoint: "/governance/acknowledgements/",
+        fields: [
+          { name: "policy", label: "Policy", type: "select", required: true, optionsUrl: "/governance/policies/", optionValue: "id", optionLabel: "title" },
         ],
       },
       audits: {
@@ -115,6 +140,13 @@
           { name: "deadline", label: "Deadline (optional)", type: "date" },
         ],
       },
+      "challenge-participation": {
+        title: "Join a Challenge", endpoint: "/gamification/challenge-participation/",
+        fields: [
+          { name: "challenge", label: "Challenge", type: "select", required: true, optionsUrl: "/gamification/challenges/", optionValue: "id", optionLabel: "title" },
+          { name: "progress", label: "Progress (%)", type: "number", min: 0, step: "1", default: 0 },
+        ],
+      },
       badges: {
         title: "New Badge", endpoint: "/gamification/badges/",
         fields: [
@@ -134,6 +166,25 @@
         ],
       },
     },
+    reports: (function () {
+      // Every report tab can save a report definition; the tab's type is preselected.
+      function savedReportForm(defaultType) {
+        return {
+          title: "Save Report Definition", endpoint: "/reports/saved/",
+          fields: [
+            { name: "name", label: "Name", type: "text", required: true },
+            { name: "report_type", label: "Report type", type: "select", required: true, options: E.reportType, default: defaultType },
+          ],
+        };
+      }
+      return {
+        environmental: savedReportForm("ENVIRONMENTAL"),
+        social: savedReportForm("SOCIAL"),
+        governance: savedReportForm("GOVERNANCE"),
+        esg: savedReportForm("ESG_SUMMARY"),
+        custom: savedReportForm("ESG_SUMMARY"),
+      };
+    })(),
     settings: {
       departments: {
         title: "New Department", endpoint: "/catalog/departments/",
@@ -164,8 +215,12 @@
       control = `<label class="mt-1 inline-flex items-center gap-2 text-sm text-odoo-text">
         <input type="checkbox" name="${f.name}" ${f.default ? "checked" : ""} class="rounded border-odoo-border text-odoo-teal focus:ring-odoo-teal"> Yes</label>`;
     } else if (f.type === "select") {
-      const opts = (f.options || []).map(([v, l]) => `<option value="${v}">${UI.escapeHtml(l)}</option>`).join("");
+      const opts = (f.options || []).map(([v, l]) =>
+        `<option value="${v}" ${f.default === v ? "selected" : ""}>${UI.escapeHtml(l)}</option>`).join("");
       control = `<select name="${f.name}" class="${INPUT}"><option value="">— select —</option>${opts}</select>`;
+    } else if (f.type === "file") {
+      control = `<input type="file" name="${f.name}" ${f.accept ? `accept="${f.accept}"` : ""}
+        class="mt-1 block w-full text-sm text-odoo-text file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-odoo-text">`;
     } else {
       const a = [`type="${f.type}"`, `name="${f.name}"`];
       if (f.type === "number") { if (f.min != null) a.push(`min="${f.min}"`); if (f.step) a.push(`step="${f.step}"`); }
@@ -185,11 +240,24 @@
       const el = form.querySelector(`[name="${f.name}"]`);
       if (!el) return;
       if (f.type === "checkbox") { v[f.name] = el.checked; return; }
+      if (f.type === "file") { v[f.name] = el.files[0] || ""; return; }
       const raw = el.value.trim();
       if (raw === "") { if (f.required) v[f.name] = ""; return; }
       v[f.name] = f.type === "number" ? Number(raw) : raw;
     });
     return v;
+  }
+
+  /** Serialize values as JSON, or FormData when the config has a file field. */
+  function buildBody(cfg, values) {
+    if (!cfg.fields.some((f) => f.type === "file")) {
+      return { body: JSON.stringify(values) };
+    }
+    const fd = new FormData();
+    Object.entries(values).forEach(([k, val]) => {
+      if (val !== "" && val != null) fd.append(k, val);
+    });
+    return { body: fd };
   }
 
   function clientValidate(cfg, values) {
@@ -262,7 +330,7 @@
       const btn = form.querySelector('button[type="submit"]');
       btn.disabled = true;
       try {
-        const res = await API.request(cfg.endpoint, { method: "POST", body: JSON.stringify(values) });
+        const res = await API.request(cfg.endpoint, { method: "POST", ...buildBody(cfg, values) });
         if (res.ok) { m.close(); Toast.success("Created successfully."); onSuccess && onSuccess(); return; }
         const data = await res.json().catch(() => ({}));
         if (res.status === 403) formError(form, "You don't have permission to create this.");
@@ -283,5 +351,9 @@
     return Object.keys(errs).length ? errs : { non_field_errors: "Could not save." };
   }
 
-  global.Forms = { open };
+  function has(module, tab) {
+    return Boolean((FORMS[module] || {})[tab]);
+  }
+
+  global.Forms = { open, has };
 })(window);

@@ -1,11 +1,38 @@
 """Report export endpoint — streams CSV / XLSX / PDF for the module Export button."""
 from django.http import HttpResponse
+from rest_framework import serializers, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from . import exporters, services
+from .models import SavedReport
+
+
+class SavedReportSerializer(serializers.ModelSerializer):
+    report_type_label = serializers.CharField(source="get_report_type_display", read_only=True)
+    owner_name = serializers.CharField(source="owner.get_full_name", read_only=True)
+
+    class Meta:
+        model = SavedReport
+        fields = ("id", "public_id", "name", "report_type", "report_type_label",
+                  "filters", "owner_name", "created_at")
+        extra_kwargs = {"filters": {"required": False}}
+
+
+class SavedReportViewSet(viewsets.ModelViewSet):
+    """Custom Report Builder: save and list the caller's report definitions."""
+
+    serializer_class = SavedReportSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post"]
+
+    def get_queryset(self):
+        return SavedReport.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 _TYPES = {"ENVIRONMENTAL", "SOCIAL", "GOVERNANCE", "ESG_SUMMARY"}
 _FORMATS = {"csv", "xlsx", "pdf"}

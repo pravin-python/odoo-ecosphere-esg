@@ -30,14 +30,28 @@ class ChallengeSerializer(serializers.ModelSerializer):
 
 
 class ChallengeParticipationSerializer(serializers.ModelSerializer):
+    challenge = serializers.PrimaryKeyRelatedField(
+        queryset=Challenge.objects.all(), write_only=True)
     challenge_title = serializers.CharField(source="challenge.title", read_only=True)
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
     status_label = serializers.CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = ChallengeParticipation
-        fields = ("id", "public_id", "challenge_title", "employee_name",
+        fields = ("id", "public_id", "challenge", "challenge_title", "employee_name",
                   "progress", "status", "status_label")
+        read_only_fields = ("status",)
+
+    def validate_challenge(self, challenge):
+        user = self.context["request"].user
+        if ChallengeParticipation.objects.filter(challenge=challenge, employee=user).exists():
+            raise serializers.ValidationError("You have already joined this challenge.")
+        return challenge
+
+    def validate_progress(self, value):
+        if not 0 <= value <= 100:
+            raise serializers.ValidationError("Progress must be between 0 and 100.")
+        return value
 
 
 class BadgeSerializer(serializers.ModelSerializer):
@@ -67,9 +81,14 @@ class ChallengeViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post"]
 
 
-class ChallengeParticipationViewSet(viewsets.ReadOnlyModelViewSet):
+class ChallengeParticipationViewSet(viewsets.ModelViewSet):
     queryset = ChallengeParticipation.objects.select_related("challenge", "employee").all()
     serializer_class = ChallengeParticipationSerializer
+    http_method_names = ["get", "post"]
+
+    def perform_create(self, serializer):
+        # Joining is always for the caller.
+        serializer.save(employee=self.request.user)
 
 
 class BadgeViewSet(viewsets.ModelViewSet):

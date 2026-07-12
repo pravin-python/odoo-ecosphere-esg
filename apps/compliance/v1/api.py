@@ -23,13 +23,20 @@ class ESGPolicySerializer(serializers.ModelSerializer):
 
 
 class PolicyAcknowledgementSerializer(serializers.ModelSerializer):
+    policy = serializers.PrimaryKeyRelatedField(queryset=ESGPolicy.objects.all(), write_only=True)
     policy_title = serializers.CharField(source="policy.title", read_only=True)
     employee_name = serializers.CharField(source="employee.get_full_name", read_only=True)
 
     class Meta:
         model = PolicyAcknowledgement
-        fields = ("id", "public_id", "policy_title", "employee_name",
+        fields = ("id", "public_id", "policy", "policy_title", "employee_name",
                   "acknowledged_at", "is_acknowledged")
+
+    def validate_policy(self, policy):
+        user = self.context["request"].user
+        if PolicyAcknowledgement.objects.filter(policy=policy, employee=user).exists():
+            raise serializers.ValidationError("You are already enrolled in this policy.")
+        return policy
 
 
 class AuditSerializer(serializers.ModelSerializer):
@@ -67,9 +74,14 @@ class ESGPolicyViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post"]
 
 
-class PolicyAcknowledgementViewSet(viewsets.ReadOnlyModelViewSet):
+class PolicyAcknowledgementViewSet(viewsets.ModelViewSet):
     queryset = PolicyAcknowledgement.objects.select_related("policy", "employee").all()
     serializer_class = PolicyAcknowledgementSerializer
+    http_method_names = ["get", "post"]
+
+    def perform_create(self, serializer):
+        # Enrolment is always for the caller — never a client-supplied employee.
+        serializer.save(employee=self.request.user)
 
     @action(detail=True, methods=["post"])
     def acknowledge(self, request, pk=None):

@@ -94,6 +94,12 @@ class EmployeeParticipationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"proof_file": "Evidence upload (image/PDF) is required to participate."}
             )
+        activity = attrs.get("activity")
+        user = self.context["request"].user
+        if activity and EmployeeParticipation.objects.filter(
+                activity=activity, employee=user).exists():
+            raise serializers.ValidationError(
+                {"activity": "You have already joined this activity."})
         return attrs
 
 

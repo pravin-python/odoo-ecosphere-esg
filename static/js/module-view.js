@@ -442,7 +442,13 @@
     reports: {
       environmental: reportView("ENVIRONMENTAL"), social: reportView("SOCIAL"),
       governance: reportView("GOVERNANCE"), esg: reportView("ESG_SUMMARY"),
-      custom: reportView("ESG_SUMMARY"),
+      // Custom Report Builder: the caller's saved report definitions.
+      custom: tableView("/reports/saved/", [
+        { label: "Name", key: "name" },
+        { label: "Type", render: (r) => UI.escapeHtml(r.report_type_label) },
+        { label: "Owner", key: "owner_name" },
+        { label: "Created", render: (r) => UI.fmtDate(r.created_at) },
+      ]),
     },
     settings: {
       departments: tableView("/catalog/departments/", COLS.departments),
@@ -478,8 +484,15 @@
     if (exportBtn) exportBtn.addEventListener("click", () =>
       downloadReport(MODULE_REPORT[module] || "ESG_SUMMARY", "pdf"));
 
-    // Wire the "+ New" button to the schema-driven create form for this tab.
+    // Wire the "+ New" button to this tab's create form; hide it on tabs where
+    // creation doesn't apply (leaderboard, diversity, config, notifications).
     const newBtn = document.getElementById("new-btn");
-    if (newBtn) newBtn.addEventListener("click", () => window.Forms.open(module, tab, reload));
+    if (newBtn) {
+      if (window.Forms.has(module, tab)) {
+        newBtn.addEventListener("click", () => window.Forms.open(module, tab, reload));
+      } else {
+        newBtn.classList.add("hidden");
+      }
+    }
   });
 })();

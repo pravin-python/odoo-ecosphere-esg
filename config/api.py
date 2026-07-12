@@ -10,8 +10,9 @@ from apps.compliance.v1 import api as gov_api
 from apps.engagement.v1 import api as gam_api
 from apps.engagement.v1.api import LeaderboardView, MyProfileView
 from apps.environmental.v1 import api as env_api
+from apps.fleet_ops.v1 import api as fleet_api
 from apps.notifications.v1 import api as notif_api
-from apps.reporting.v1.api import ReportExportView, ReportPreviewView
+from apps.reporting.v1.api import ReportExportView, ReportPreviewView, SavedReportViewSet
 from apps.social_impact.v1 import api as soc_api
 from apps.social_impact.v1.api import DiversityView
 from apps.system_core.v1 import api as sys_api
@@ -23,6 +24,13 @@ router = DefaultRouter()
 router.register("environmental/emission-factors", env_api.EmissionFactorViewSet, "emission-factors")
 router.register("environmental/carbon", env_api.CarbonTransactionViewSet, "carbon")
 router.register("environmental/goals", env_api.SustainabilityGoalViewSet, "goals")
+
+# ERP mock (creating a fleet log auto-generates a carbon transaction)
+router.register("erp/vehicles", fleet_api.VehicleViewSet, "vehicles")
+router.register("erp/fleet-logs", fleet_api.FleetLogViewSet, "fleet-logs")
+
+# Reports (saved definitions)
+router.register("reports/saved", SavedReportViewSet, "saved-reports")
 
 # Master data (Environmental products + Settings)
 router.register("catalog/departments", env_api.DepartmentViewSet, "departments")
